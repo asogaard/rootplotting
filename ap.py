@@ -579,7 +579,7 @@ class canvas (object):
             ymin, ymax = inf, -inf
             
             ymin          = min([v for v in map(get_minimum,          self._primitives[idx_pad]) if v is not None])
-            ymin_positive = min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None])
+            ymin_positive = 2. # min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None])
             for hist in self._primitives[idx_pad]:
                 ymax = max(get_maximum(hist), ymax)
                 pass

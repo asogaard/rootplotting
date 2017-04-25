@@ -3,14 +3,14 @@
 
 """ Example script, showing the rootplotting interface. 
 
-@file:   style.py
+@file:   example.py
 @date:   25 April 2017
 @author: Andreas Søgaard 
 @email:  andreas.sogaard@cern.ch
 """
 
 # Basic
-import sys
+import sys, glob
 
 # Scientific import(s)
 import ROOT
@@ -24,22 +24,17 @@ import ap
 # Main function
 def main ():
     
-    # Check(s)
-    if len(sys.argv) == 1:
-        warning("No inputs were provided")
-        return
-
 
     # Setup.
     # – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – 
 
     # Load data
-    files  = sys.argv[1:]
-    tree   = 'BoostedJet+ISRgamma/EventSelection/Pass/NumFatjetsAfterDphi/Postcut'
-    prefix = 'leadingfatjet_'
+    files  = glob.glob('data/*.root') #sys.argv[1:]
+    tree   = 'BoostedJet+ISRgamma/Nominal/EventSelection/Pass/NumLargeRadiusJets/Postcut'
+    prefix = 'Jet_'
 
     data = loadData(files, tree)
-    info = loadData(files, 'BoostedJet+ISRgamma/outputTree', stop=1)
+    info = loadData(files, 'BoostedJet+ISRgamma/Nominal/outputTree', stop=1)
 
     # Rename variables
     data.dtype.names = [name.replace(prefix, '') for name in data.dtype.names]
@@ -63,7 +58,7 @@ def main ():
     # Plotting
     # – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – 
 
-    bins = np.linspace(0, 300, 31, endpoint=True)
+    bins = np.linspace(50, 300, 25 + 1, endpoint=True)
     
     # Setup canvas
     c = ap.canvas(num_pads=2)
@@ -106,7 +101,6 @@ def main ():
     # Save and show plot
     c.save('test.pdf')
     c.show()
-
     return
 
 
