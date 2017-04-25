@@ -8,9 +8,6 @@
 @email:  andreas.sogaard@cern.ch
 """
 
-# Basic import(s)
-from enum import Enum 
-
 # Scientific import(s)
 import ROOT
 try:
@@ -28,7 +25,11 @@ from tools import *
 from style import *
 
 # Enum(s)
-PlotType = Enum('PlotType', 'plot hist hist2d stack')
+def Enum(*sequential, **named):
+    enums = dict(zip(sequential, range(len(sequential))), **named)
+    return type('Enum', (), enums)
+
+PlotType = Enum('plot', 'hist', 'hist2d', 'stack')
 
 
 class canvas (object):
