@@ -11,15 +11,18 @@ This repository contains several small python files that will hopyfully make you
 c = ap.canvas()
 
 # Draw stacked backgrounds
-h_WZ  = c.stack(WZ ['m'], bins=bins, weights=WZ ['weight'], fillcolor=ROOT.kAzure + 2, label='W(qq) + #gamma', scale=1.0)
-h_bkg = c.stack(bkg['m'], bins=bins, weights=bkg['weight'], fillcolor=ROOT.kAzure + 7, label='Incl. #gamma')
+h_WZ  = c.stack(WZ ['m'], bins=bins, weights=WZ ['weight'], \
+               fillcolor=ROOT.kAzure + 2, label='W(qq) + #gamma', scale=1.0)
+h_bkg = c.stack(bkg['m'], bins=bins, weights=bkg['weight'], \
+                fillcolor=ROOT.kAzure + 7, label='Incl. #gamma')
     
 # Draw stats. error of stacked sum
 h_sum  = c.getStackSum()
-c.hist(h_sum, fillstyle=3245, fillcolor=ROOT.kGray+2, linecolor=ROOT.kGray + 3, label='Stats. uncert.', option='E2')
+c.hist(h_sum, fillstyle=3245, fillcolor=ROOT.kGray+2, \
+       linecolor=ROOT.kGray + 3, label='Stats. uncert.', option='E2')
     
 # Draw data
-h_data = c.plot (data['m'], bins=bins, we markersize=0.8, label='Data')
+h_data = c.plot(data['m'], bins=bins, we markersize=0.8, label='Data')
 
 # Add labels and text
 c.xlabel('Signal jet mass [GeV]')
