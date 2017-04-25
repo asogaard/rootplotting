@@ -188,7 +188,6 @@ class canvas (object):
 
         for (h,n,t) in self._entries:
             if type(h) == ROOT.THStack: continue
-            # @TODO: Implement...
             legend.AddEntry(h, n, t)
             pass
 
@@ -240,7 +239,7 @@ class canvas (object):
         return self._ratio_plot(PlotType.plot, data, **kwargs)
 
 
-    def _plot (self, plottype, data, scale=None, option=None, **kwargs):
+    def _plot (self, plottype, data, scale=None, option=None, display=True, **kwargs):
         """ ... """
 
         # Get plot option
@@ -249,28 +248,19 @@ class canvas (object):
         if type(data).__module__.startswith(np.__name__):
             # Numpy-type
             if plottype == PlotType.stack:
-
-                hist = self._plot1D_numpy(data, option=option, display=None, scale=scale, **kwargs)
-                # Manually add to legend entries
-                if 'label' in kwargs:
-                    self._entries.append((hist, kwargs['label'], self._get_label_option(option, hist)))
-                    pass
-                first = self._add_to_stack(hist)
-                if first:
-                    self._plot1D(self._stack, option=option, scale=None, **kwargs)
-                    pass
-                for pad in self._pads + [self._canvas]:
-                    pad.Modified()
-                    pad.Update()
-                    pass
-                return hist
-
+                hist = self._plot1D_numpy(data, option=option, display=False, scale=scale, **kwargs)
+                return self._plot1D_stack(hist, option=option, scale=scale, **kwargs)
             else:
                 return self._plot1D_numpy(data, option=option, scale=scale, **kwargs)
-                pass
+
         elif type(data).__name__.startswith('TH1'):
             # ROOT TH1-type
-            return self._plot1D      (data, option=option, scale=scale, **kwargs)
+            if plottype == PlotType.stack:
+                hist = self._plot1D      (data, option=option, display=False, scale=scale, **kwargs)
+                return self._plot1D_stack(hist, option=option, scale=scale, **kwargs)
+            else:
+                return self._plot1D      (data, option=option, scale=scale, **kwargs)
+
         else:
             warning("Input data type not recognised:")
             print type(data[0])
@@ -290,9 +280,11 @@ class canvas (object):
         if type(data[0]).__module__.startswith(np.__name__):
             # Numpy-type
             return self._ratio_plot1D_numpy(data, option=option, **kwargs)
+
         elif type(data[0]).__name__.startswith('TH1'):
             # ROOT TH1-type
             return self._ratio_plot1D      (data, option=option, **kwargs)
+
         else:
             warning("Input data type not recognised:")
             print type(data[0])
@@ -349,7 +341,7 @@ class canvas (object):
         assert idx_pad >= 0,              "Requested pad number {} is too small".format(idx_pad)
 
         # Scale
-        if scale:
+        if scale and type(hist) != ROOT.THStack:
             hist.Scale(scale)
             pass
 
@@ -416,6 +408,29 @@ class canvas (object):
 
         # Plot histogram
         return self._plot1D(h, 1, option, **kwargs)
+
+
+    def _plot1D_stack (self, hist, option='', **kwargs):
+        """ ... """
+
+        # Manually add to legend entries
+        if 'label' in kwargs:
+            # Add in the correct (inverse) order for stacked histograms
+            idx = 1 if (len(self._entries) > 0 and self._entries[0][1].strip().lower() == 'data') else 0
+            self._entries.insert(idx, (hist, kwargs['label'], self._get_label_option(option, hist)))
+            pass
+
+        first = self._add_to_stack(hist)
+        if first:
+            self._plot1D(self._stack, option=option, **kwargs)
+            pass
+
+        for pad in self._pads + [self._canvas]:
+            pad.Modified()
+            pad.Update()
+            pass
+
+        return hist
 
 
     def _add_to_stack (self, hist, option='HIST'):
