@@ -22,7 +22,7 @@ c.hist(h_sum, fillstyle=3245, fillcolor=ROOT.kGray+2, \
        linecolor=ROOT.kGray + 3, label='Stats. uncert.', option='E2')
     
 # Draw data
-h_data = c.plot(data['m'], bins=bins, we markersize=0.8, label='Data')
+h_data = c.plot(data['m'], bins=bins, markersize=0.8, label='Data')
 
 # Add labels and text
 c.xlabel('Signal jet mass [GeV]')
