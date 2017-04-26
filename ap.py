@@ -64,10 +64,11 @@ class overlay (object):
         self._log   = False #canvas._log
         self._color = color
 
-        # Resize canvas and pad(S)
-        canvas._canvas.SetCanvasSize(int(canvas._canvas.GetWw() * 0.80 / 0.75), canvas._canvas.GetWh())
+        # Resize canvas and pad(s)
+        right_margin = 0.12
+        canvas._canvas.SetCanvasSize(int(canvas._canvas.GetWw() * 0.80 / (0.80 - right_margin - 0.05)), canvas._canvas.GetWh()) # @TODO: Improve, to take the values from the canvas, rather than using hard-coded values
         for pad in canvas._pads:
-            pad.SetRightMargin(0.10)
+            pad.SetRightMargin(right_margin)
             pass
 
         other.SetTicks(1,0)
@@ -82,7 +83,7 @@ class overlay (object):
         self._pad = ROOT.TPad(self._base.GetName() + '_overlay', "", 0, 0, 1, 1)
         
         # Set proper ranges
-        ymin, ymax = 0, 1 # @TODO: Improve
+        ymin, ymax = 0, 1.2 # @TODO: Improve
         if self._log:
             ymax = np.exp((np.log(ymax) - np.log(ymin)) / (1. - self._padding) + np.log(ymin))
         else:
@@ -131,6 +132,7 @@ class overlay (object):
             self._axis.SetLabelColor(self._color)
             self._axis.SetTitleColor(self._color)
             self._axis.SetLabelOffset(ROOT.gStyle.GetLabelOffset('y'))
+            self._axis.SetTitleOffset(ROOT.gStyle.GetTitleOffset('z'))
             pass
 
         return
@@ -183,7 +185,7 @@ class canvas (object):
         return
 
 
-    def lines (self, lines=[], qualifier='', ATLAS=True, idx_pad=0):
+    def text (self, lines=[], qualifier='', ATLAS=True, idx_pad=0):
         """ ... """ 
 
         # Check(s)
