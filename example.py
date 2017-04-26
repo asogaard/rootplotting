@@ -47,6 +47,7 @@ def main ():
 
     # Scaling by cross section
     xsec = loadXsec('sampleInfo.csv')
+    lumi = 36.1
 
     # Append new DSID field
     data = append_fields(data, 'DSID', np.zeros((data.size,)), dtypes=int)
@@ -56,6 +57,7 @@ def main ():
         data['weight'][msk] *= xsec[DSID] # Scale by cross section x filter eff. for this DSID
         data['DSID']  [msk] = DSID # Store DSID
         pass
+    data['weight'] *= lumi # Scale all events (MC) by luminosity
     
     msk_incl = (data['DSID'] >= 361039) & (data['DSID'] <= 361062)
     msk_W    = (data['DSID'] >= 305435) & (data['DSID'] <= 305439)
@@ -87,6 +89,13 @@ def main ():
     h_err   = c.ratio_plot((h_sum,  h_sum), option='E2')
     h_ratio = c.ratio_plot((h_data, h_sum), markersize=0.8)
     
+    # Overlay
+    o = ap.overlay(c)
+    h_overlay = c.hist(bins + 0.5*bins[0], bins=bins, weights=bins/bins[-1], display=False, linecolor=ROOT.kRed)
+    h_overlay.SetLineColor(ROOT.kRed)
+    o._pad.cd()
+    h_overlay .Draw("HIST ][ SAME")
+
     # Add labels and text
     c.xlabel('Signal jet mass [GeV]')
     c.ylabel('Events')
