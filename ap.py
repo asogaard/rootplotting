@@ -417,13 +417,18 @@ class canvas (object):
             return
 
         # Fill histogram
-        h = ROOT.TH1F('h_{}'.format(id(data)), "", len(bins) - 1, bins)
-        if len(data) == len(bins) - 1:
-            # Assuming 'data' are bin values
-            array2hist(data, h)
+        if len(data) == len(bins):
+            # Assuming 'data' and 'bins' are sets of (x,y)-points
+            h = ROOT.TGraph('g_{}'.format(id(data)), "", len(bins), bins, data)
         else:
-            # Assuming 'data' are values to be filled
-            fill_hist(h, data, weights=weights)
+            h = ROOT.TH1F('h_{}'.format(id(data)), "", len(bins) - 1, bins)
+            if len(data) == len(bins) - 1:
+                # Assuming 'data' are bin values
+                array2hist(data, h)
+            else:
+                # Assuming 'data' are values to be filled
+                fill_hist(h, data, weights=weights)
+                pass
             pass
         
         # Plot histogram
