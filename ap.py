@@ -29,7 +29,7 @@ def Enum(*sequential, **named):
     enums = dict(zip(sequential, range(len(sequential))), **named)
     return type('Enum', (), enums)
 
-PlotType = Enum('plot', 'hist', 'hist2d', 'stack')
+PlotType = Enum('plot', 'hist', 'hist2d', 'stack', 'graph')
 
 """
 @TODO: - Make 'pad' class, such that 'overlay' in inherits from 'pad' and 'canvas' is a wrapper than can hold one or more pads.
@@ -341,6 +341,12 @@ class canvas (object):
         return self._plot(PlotType.stack, data, **kwargs)
 
 
+    def graph (self, data, **kwargs):
+        """ ... """
+
+        return self._plot(PlotType.graph, data, **kwargs)
+
+
     def ratio_plot (self, data, **kwargs):
         """ ... """
 
@@ -419,7 +425,7 @@ class canvas (object):
         # Fill histogram
         if len(data) == len(bins):
             # Assuming 'data' and 'bins' are sets of (x,y)-points
-            h = ROOT.TGraph('g_{}'.format(id(data)), "", len(bins), bins, data)
+            h = ROOT.TGraph(len(bins), bins, data)
         else:
             h = ROOT.TH1F('h_{}'.format(id(data)), "", len(bins) - 1, bins)
             if len(data) == len(bins) - 1:
@@ -863,6 +869,7 @@ class canvas (object):
         if   plottype == PlotType.plot:  option = 'PE0'
         elif plottype == PlotType.hist:  option = 'HIST'
         elif plottype == PlotType.stack: option = 'HIST'
+        elif plottype == PlotType.graph: option = 'APL'
         else:
             warning("Plot type '{}' not recognised".format(plottype.name))
             pass
