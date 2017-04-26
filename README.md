@@ -34,9 +34,9 @@ h_data = c.plot(data['m'], bins=bins, markersize=0.8, label='Data')
 # Add labels and text
 c.xlabel('Signal jet mass [GeV]')
 c.ylabel('Events')
-c.lines(["#sqrt{s} = 13 TeV,  L = 36.1 fb^{-1}",
-         "Trimmed anti-k_{t}^{R=1.0} jets"], 
-        qualifier='Simulation Internal')
+c.text(["#sqrt{s} = 13 TeV,  L = 36.1 fb^{-1}",
+        "Trimmed anti-k_{t}^{R=1.0} jets"], 
+       qualifier='Simulation Internal')
 
 # Configure y-axis scale
 c.log(True)

@@ -91,9 +91,9 @@ def main ():
     c.xlabel('Signal jet mass [GeV]')
     c.ylabel('Events')
     c.ylabel('Data / Bkg.', idx_pad=1)
-    c.lines(["#sqrt{s} = 13 TeV,  L = 36.1 fb^{-1}",
-             "Trimmed anti-k_{t}^{R=1.0} jets"], 
-            qualifier='Simulation Internal')
+    c.text(["#sqrt{s} = 13 TeV,  L = 36.1 fb^{-1}",
+            "Trimmed anti-k_{t}^{R=1.0} jets"], 
+           qualifier='Simulation Internal')
 
     # Add line(s) and limit(s)
     c.yline(1, idx_pad=1)
