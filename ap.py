@@ -12,7 +12,7 @@
 import ROOT
 try:
     import numpy as np
-    from root_numpy import fill_hist
+    from root_numpy import fill_hist, array2hist
 except:
     print "ERROR: Scientific python packages were not set up properly."
     print " $ source snippets/pythonenv.sh"
@@ -31,6 +31,113 @@ def Enum(*sequential, **named):
 
 PlotType = Enum('plot', 'hist', 'hist2d', 'stack')
 
+"""
+@TODO: - Make 'pad' class, such that 'overlay' in inherits from 'pad' and 'canvas' is a wrapper than can hold one or more pads.
+       - 'pad' should implement the core plotting functionality
+"""
+
+
+# Overlay class
+# --------------------------------------------------------------------
+
+class overlay (object):
+    """ docstring for overlay """
+
+    def __init__(self, canvas, idx_pad=0, color=ROOT.kRed):
+        super(overlay, self).__init__()
+
+        # Check(s)
+        # ...
+
+        # Get refernce to base pad
+        canvas._update()
+        other = canvas._pads[idx_pad]
+        
+        # Member variables
+        self._pad     = None
+        self._axis    = None
+        self._padding = canvas._padding
+        self._xmin = 0
+        self._xmax = 0
+        self._base = other
+        self._base_yaxis = canvas._yaxis(idx_pad)
+        self._log   = False #canvas._log
+        self._color = color
+
+        # Resize canvas and pad(S)
+        canvas._canvas.SetCanvasSize(int(canvas._canvas.GetWw() * 0.80 / 0.75), canvas._canvas.GetWh())
+        for pad in canvas._pads:
+            pad.SetRightMargin(0.10)
+            pass
+
+        other.SetTicks(1,0)
+        other.Update()
+        other.cd()
+
+        # Store coordinates
+        self._xmin = self._base.GetUxmin()
+        self._xmax = self._base.GetUxmax()
+        
+        # Create overlay pad
+        self._pad = ROOT.TPad(self._base.GetName() + '_overlay', "", 0, 0, 1, 1)
+        
+        # Set proper ranges
+        ymin, ymax = 0, 1 # @TODO: Improve
+        if self._log:
+            ymax = np.exp((np.log(ymax) - np.log(ymin)) / (1. - self._padding) + np.log(ymin))
+        else:
+            ymax = ymax / (1. - self._padding)
+            pass
+        dy   = (ymax       - ymin)       / (1. - self._base.GetTopMargin()  - self._base.GetBottomMargin())
+        dx   = (self._xmax - self._xmin) / (1. - self._base.GetLeftMargin() - self._base.GetRightMargin())
+      
+        self._pad.Range(self._xmin - self._base.GetLeftMargin()   * dx,
+                        ymin       - self._base.GetBottomMargin() * dy,
+                        self._xmax + self._base.GetRightMargin()  * dx,
+                        ymax       + self._base.GetTopMargin()    * dy)
+
+        # Axis
+        self._axis = ROOT.TGaxis(self._xmax, ymin,
+                                 self._xmax, ymax, 
+                                 ymin, ymax, 510, "+L")
+
+        # Style
+        self._style()
+
+        # Draw overlay pad and axis
+        self._pad.Draw()
+        self._pad.cd()
+        self._axis.Draw()
+        return
+
+
+    def _style (self):
+        """ ... """
+
+        # Pad
+        if self._pad:
+            self._pad.SetFillStyle(4000)
+            self._pad.SetFrameFillStyle(4000)
+            self._pad.SetFrameFillColor(0)
+            pass
+
+        # Axis
+        if self._axis:
+            self._axis.SetLabelFont(ROOT.gStyle.GetTextFont())
+            self._axis.SetLabelSize(ROOT.gStyle.GetTextSize())
+            self._axis.SetTitleFont(ROOT.gStyle.GetTextFont())
+            self._axis.SetTitleSize(ROOT.gStyle.GetTextSize())
+            self._axis.SetLineColor (self._color)
+            self._axis.SetLabelColor(self._color)
+            self._axis.SetTitleColor(self._color)
+            self._axis.SetLabelOffset(ROOT.gStyle.GetLabelOffset('y'))
+            pass
+
+        return
+
+
+# Canvas class
+# --------------------------------------------------------------------
 
 class canvas (object):
     """ docstring for canvas """
@@ -38,7 +145,7 @@ class canvas (object):
     def __init__(self, num_pads=1, size=None, fraction=0.3, batch=False):
         super(canvas, self).__init__()
 
-        ROOT.gROOT.SetBatch(False)
+        ROOT.gROOT.SetBatch(batch)
         
         # Check(s)
         assert type(num_pads) == int, "Number of pads must be an integer"
@@ -240,27 +347,29 @@ class canvas (object):
         return self._ratio_plot(PlotType.plot, data, **kwargs)
 
 
-    def _plot (self, plottype, data, scale=None, option=None, display=True, **kwargs):
+    def _plot (self, plottype, data, display=True, **kwargs):
         """ ... """
 
         # Get plot option
-        option = option if option else self._get_plot_option(plottype)
+        if 'option' not in kwargs:
+            kwargs['option'] = self._get_plot_option(plottype)
+            pass
 
         if type(data).__module__.startswith(np.__name__):
             # Numpy-type
             if plottype == PlotType.stack:
-                hist = self._plot1D_numpy(data, option=option, display=False, scale=scale, **kwargs)
-                return self._plot1D_stack(hist, option=option, scale=scale, **kwargs)
+                hist = self._plot1D_numpy(data, display=False,   **kwargs)
+                return self._plot1D_stack(hist, display=display, **kwargs)
             else:
-                return self._plot1D_numpy(data, option=option, scale=scale, **kwargs)
+                return self._plot1D_numpy(data, display=display, **kwargs)
 
         elif type(data).__name__.startswith('TH1'):
             # ROOT TH1-type
             if plottype == PlotType.stack:
-                hist = self._plot1D      (data, option=option, display=False, scale=scale, **kwargs)
-                return self._plot1D_stack(hist, option=option, scale=scale, **kwargs)
+                hist = self._plot1D      (data, display=False,   **kwargs)
+                return self._plot1D_stack(hist, display=display, **kwargs)
             else:
-                return self._plot1D      (data, option=option, scale=scale, **kwargs)
+                return self._plot1D      (data, display=display, **kwargs)
 
         else:
             warning("Input data type not recognised:")
@@ -269,22 +378,24 @@ class canvas (object):
         return None
 
 
-    def _ratio_plot (self, plottype, data, option=None, **kwargs):
+    def _ratio_plot (self, plottype, data, **kwargs):
         """ ... """
 
         # Check(s)
         assert type(data) == type(data), "Input data types must match"
 
         # Get plot option
-        option = option if option else self._get_plot_option(plottype)
+        if 'option' not in kwargs:
+            kwargs['option'] = self._get_plot_option(plottype)
+            pass
             
         if type(data[0]).__module__.startswith(np.__name__):
             # Numpy-type
-            return self._ratio_plot1D_numpy(data, option=option, **kwargs)
+            return self._ratio_plot1D_numpy(data, **kwargs)
 
         elif type(data[0]).__name__.startswith('TH1'):
             # ROOT TH1-type
-            return self._ratio_plot1D      (data, option=option, **kwargs)
+            return self._ratio_plot1D      (data, **kwargs)
 
         else:
             warning("Input data type not recognised:")
@@ -307,7 +418,13 @@ class canvas (object):
 
         # Fill histogram
         h = ROOT.TH1F('h_{}'.format(id(data)), "", len(bins) - 1, bins)
-        fill_hist(h, data, weights=weights)
+        if len(data) == len(bins) - 1:
+            # Assuming 'data' are bin values
+            array2hist(data, h)
+        else:
+            # Assuming 'data' are values to be filled
+            fill_hist(h, data, weights=weights)
+            pass
         
         # Plot histogram
         return self._plot1D(h, idx_pad, option, **kwargs)
@@ -453,18 +570,7 @@ class canvas (object):
 
         # Check(s)
         if self._stack is None: return None
-
         return get_stack_sum(self._stack)
-        '''sumHisto = None
-        for hist in self._stack.GetHists():
-            if sumHisto is None:
-                sumHisto = hist.Clone('sumHisto')
-            else:
-                sumHisto.Add(hist)
-                pass
-            pass
-
-        return sumHisto'''
 
 
     def log (self, log=True):
@@ -595,7 +701,7 @@ class canvas (object):
             ymin, ymax = inf, -inf
             
             ymin          = min([v for v in map(get_minimum,          self._primitives[idx_pad]) if v is not None])
-            ymin_positive = 2. # min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None])
+            ymin_positive = 2. # min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None]) # @TODO: Improve
             for hist in self._primitives[idx_pad]:
                 ymax = max(get_maximum(hist), ymax)
                 pass
@@ -632,7 +738,6 @@ class canvas (object):
 
             self._yaxis(pad).SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * self._size[1] / float(self._size[0]))
             self._yaxis(pad).SetNdivisions(505)
-            #self._xaxis(pad).SetTickLength(self._xaxis(pad).GetTickLength() * (1. - self._fraction) / self._fraction)
             self._xaxis(pad).SetTickLength(ROOT.gStyle.GetTickLength('x') * (1. - self._fraction) / self._fraction)
             self._xaxis(pad).SetTitleOffset(4)
             if self._ylims[idx_pad] is not None:
