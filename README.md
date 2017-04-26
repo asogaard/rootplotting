@@ -7,6 +7,13 @@ This repository contains several small python files that will hopyfully make you
 
 * [ap.py](ap.py): Contains plotting classes, most notably the `canvas` class that allows you to create ROOT plots using an interface similar to that of the popular python library matplotlib:
 ```
+import ROOT
+from rootplotting import ap
+
+# ...
+
+# data, bkg, WZ = structured numpy arrays
+
 # Create canvas
 c = ap.canvas()
 
