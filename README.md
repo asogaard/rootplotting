@@ -5,7 +5,7 @@ Scripts for producing ROOT plots using a matplotlib-like interface.
 
 This repository contains several small python files that will hopyfully make your ROOT-plotting life a bit easier. In particular:
 
-* [ap.py](ap.py): Contains plotting classes, most notably the `canvas` class that allows you to create ROOT plots using an interface similar to that of the popular python library matplotlib:
+* [ap](ap): Contains plotting classes, in particular the `pad`, `canvas`, and `overlay` classes that allow you to create ROOT plots using an interface similar to that of the popular python library matplotlib:
 ```
 import ROOT
 from rootplotting import ap
@@ -50,7 +50,7 @@ c.show()
 ```
 * [tools.py](tools.py): Contains some utility functions, e.g. to make the reading of ROOT TTrees into numpy arrays easier.
 * [style.py](style.py): Style sheet for the ROOT plots, based on the ATLAS style recommendations.
-* [examples.py](example.py): An python script showing how to make pretty plots in just a few lines. Run as 
+* [example.py](example.py): An python script showing how to make pretty plots in just a few lines. Run as 
 ```
 $ python example.py
 ```
