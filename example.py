@@ -29,7 +29,7 @@ def main ():
     # – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – – 
 
     # Load data
-    files  = glob.glob('data/*.root') 
+    files  = glob.glob('data/objdef_MC_3610*.root')  + glob.glob('data/objdef_MC_3054*.root') 
 
     if len(files) == 0:
         warning("No files found. Try to run:")
@@ -71,6 +71,7 @@ def main ():
     
     # Setup canvas
     c = ap.canvas(num_pads=2)
+    p0, p1 = c.pads()
 
     # Add stacked backgrounds
     h_W    = c.stack(data['m'][msk_W],    bins=bins, weights=data['weight'][msk_W],    fillcolor=ROOT.kAzure + 2, label='W(qq) + #gamma', scale=1)
@@ -91,22 +92,20 @@ def main ():
     
     # Overlay
     o = ap.overlay(c)
-    h_overlay = c.hist(bins + 0.5*bins[0], bins=bins, weights=bins/bins[-1], display=False, linecolor=ROOT.kRed)
-    h_overlay.SetLineColor(ROOT.kRed)
-    o._pad.cd()
-    h_overlay .Draw("HIST ][ SAME")
+    o.graph(np.square(bins), bins=bins, linecolor=ROOT.kRed, linewidth=2, option='L')
+    o.label('Overlay plot')
 
     # Add labels and text
     c.xlabel('Signal jet mass [GeV]')
     c.ylabel('Events')
-    c.ylabel('Data / Bkg.', idx_pad=1)
+    p1.ylabel('Data / Bkg.')
     c.text(["#sqrt{s} = 13 TeV,  L = 36.1 fb^{-1}",
             "Trimmed anti-k_{t}^{R=1.0} jets"], 
            qualifier='Simulation Internal')
 
     # Add line(s) and limit(s)
-    c.yline(1, idx_pad=1)
-    c.ylim((0.8, 1.2), idx_pad=1)
+    p1.ylines([0.9, 1.0, 1.1])
+    p1.ylim(0.8, 1.2)
 
     # Configure axis padding and -scale
     c.padding(0.35)

@@ -110,8 +110,15 @@ def get_maximum (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_maximum(get_stack_sum(hist))
-        pass
-    
+    elif type(hist) == ROOT.TGraph:
+        N = hist.GetN()
+        output, x, y = ROOT.Double(-inf), ROOT.Double(0), ROOT.Double(-inf)
+        for i in range(N):
+            hist.GetPoint(i, x, y)
+            output = max(output,y)
+            pass
+        return output
+
     try:
         return max(map(hist.GetBinContent, range(1, hist.GetXaxis().GetNbins() + 1)))
     except ValueError:
@@ -129,7 +136,14 @@ def get_minimum (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_minimum(get_stack_sum(hist))
-        pass
+    elif type(hist) == ROOT.TGraph:
+        N = hist.GetN()
+        output, x, y = ROOT.Double(inf), ROOT.Double(0), ROOT.Double(inf)
+        for i in range(N):
+            hist.GetPoint(i, x, y)
+            output = min(output,y)
+            pass
+        return output
 
     try:
         return min(map(hist.GetBinContent, range(1, hist.GetXaxis().GetNbins() + 1)))
@@ -147,7 +161,15 @@ def get_minimum_positive (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_minimum_positive(get_stack_sum(hist))
-        pass
+    elif type(hist) == ROOT.TGraph:
+        N = hist.GetN()
+        output, x, y = ROOT.Double(inf), ROOT.Double(0), ROOT.Double(inf)
+        for i in range(N):
+            hist.GetPoint(i, x, y)
+            if x <= 0: continue
+            output = min(output,y)
+            pass
+        return output
 
     try:
         return min([m for m in map(hist.GetBinContent, range(1, hist.GetXaxis().GetNbins() + 1)) if m > 0])
@@ -172,6 +194,16 @@ def get_stack_sum (stack):
             pass
         pass
     return sumHisto
+
+
+def is_overlay (pad):
+    """ Determine whether input pad is of type 'overlay' """
+    return type(pad).__name__.endswith('overlay')
+
+
+def is_canvas (pad):
+    """ Determine whether input pad is of type 'canvas' """
+    return type(pad).__name__.endswith('canvas')
 
 
 def warning (string):

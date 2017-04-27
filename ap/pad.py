@@ -161,23 +161,18 @@ class pad (object):
         return
 
 
-    def ylim (self, ymin, ymax):
-        return self.ylim([ymin, ymax])
-
-
-    def ylim (self, ylim):
+    def ylim (self, *args):
         """ ... """
 
         # Check(s)
-        if type(ylim) not in [list, tuple]:
-            warning("Axis limits must be provided as a tuple or lost. Recieved:")
-            print type(ylim)
+        if type(args) == list and len(args) == 1:
+            self.ylim(*args)
             return
 
-        assert len(ylim) == 2, "Y-axis limits have size {}, which is different from two as required.".format(len(ylim))
+        assert len(args) == 2, "Y-axis limits have size {}, which is different from two as required.".format(len(ylim))
 
         # Store axis limits
-        self._ylim = ylim
+        self._ylim = args
         return
 
 
@@ -617,7 +612,7 @@ class pad (object):
         self._primitives.append(hist)
 
         # Check whether several filled histograms have been added
-        if (type(hist) == ROOT.THStack or hist.GetFillColor() != 0) and len(filter(lambda h: type(h) == ROOT.THStack or (type(h).__name__.startswith('TH') and h.GetFillColor() != 0), self._primitives)) == 2:
+        if (type(hist) == ROOT.THStack or hist.GetFillColor() != 0) and len(filter(lambda h: type(h) == ROOT.THStack or (type(h).__name__.startswith('TH') and h.GetFillColor() != 0 and not option.startswith('E')), self._primitives)) == 2:
             warning("Several filled, non-stacked histograms have been added. This may be misleading.")
             pass
 

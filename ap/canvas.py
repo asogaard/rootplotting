@@ -142,6 +142,18 @@ class canvas (object):
     def ratio_plot (self, *args, **kwargs): return
 
     @defer(0)
+    def getStackSum (self, *args, **kwargs): return
+
+    @defer(0)
+    def ylim (self, *args, **kwargs): return
+
+    @defer(0)
+    def padding (self, *args, **kwargs): return
+
+    @defer(0)
+    def log (self, *args, **kwargs): return
+
+    @defer(0)
     def line (self, *args, **kwargs): return
     
     @defer(0)
