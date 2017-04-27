@@ -52,8 +52,6 @@ class pad (object):
         # -- TPad-type
         self._base = base
         self._base._bare().cd()
-        #self._pad = ROOT.TPad('pad_{}_{}'.format(self._base.name(), id(self)), "", *coords)
-        #self._pad = ROOT.TPad('pad_{}_{}'.format(self._base.GetName(), id(self)), "", *coords)
         self._pad = ROOT.TPad('pad_{}_{}'.format(self._base._bare().GetName(), id(self)), "", *coords)
         self._coords = coords
         self._scale  = (1./float(coords[2] - coords[0]), 1./float(coords[3] - coords[1]))
@@ -329,7 +327,7 @@ class pad (object):
         """ Draw legend on TPad. """
 
         # Check(s)
-        N = len(self._get_all_entries()) #len(self._entries)
+        N = len(self._get_all_entries())
         if N == 0:
             return
 
@@ -388,7 +386,7 @@ class pad (object):
             pass
 
         # @TODO: Defer to parent pad, if 'overlay'
-        for (h,n,t) in self._get_all_entries(): #self._entries:
+        for (h,n,t) in self._get_all_entries(): 
             if type(h) == ROOT.THStack: continue
             self._legend.AddEntry(h, n, t)
             pass
@@ -699,8 +697,7 @@ class pad (object):
     @update
     def _update (self, only_this=True):
         """ ... 
-        @TODO: - Implement proper, recursive updating e.g. for use with 'overlay'
-               - This is some reaaaally shitty naming convention
+        @TODO: - This is some reaaaally shitty naming convention
         """
 
         # Check(s)
@@ -746,7 +743,7 @@ class pad (object):
 
             # Style
             # @TODO: Move into a 'style' method
-            if is_canvas(self._base): # 'pad' on 'canvas'
+            if is_canvas(self._base): # if 'pad' on 'canvas'
                 self._yaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * self._base._size[1]       / float(self._base._size[0]))
                 pass
             self._yaxis().SetRangeUser(*axisrange)

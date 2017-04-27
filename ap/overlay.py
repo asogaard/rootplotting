@@ -93,6 +93,7 @@ class overlay (pad):
         return
 
 
+
     # Decorators
     # ----------------------------------------------------------------
 
@@ -135,6 +136,13 @@ class overlay (pad):
             self._update_axis()
             pass
         
+        return
+
+
+    @update
+    def label (self, label):
+        """ ... """
+        self._label = label
         return
 
 
@@ -216,14 +224,6 @@ class overlay (pad):
             self._axis.SetTitle(self._label)
             pass
 
-        return
-
-
-
-    @update
-    def label (self, label):
-        """ ... """
-        self._label = label
         return
 
     pass

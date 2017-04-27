@@ -182,7 +182,7 @@ class canvas (object):
         self._canvas.Update()
 
         # Set up main- and ratio pads, in the most common case
-        if self._ratio:# and not self._setup:
+        if self._ratio: # and not self._setup (?)
             self._setup_ratio_pads()
             pass
 
@@ -249,7 +249,6 @@ class canvas (object):
         ratio_pad._yaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * ratio_pad._scale[0])
         ratio_pad._yaxis().SetNdivisions(505)
         ratio_pad._xaxis().SetTickLength (ROOT.gStyle.GetTickLength ('x') * ratio_pad._scale[1])
-        #ratio_pad._xaxis().SetTitleOffset(4)
         if ratio_pad._ylim is not None:
             axisrange = ratio_pad._ylim
             ratio_pad._yaxis().SetRangeUser(*axisrange)
@@ -260,7 +259,6 @@ class canvas (object):
         ratio_pad._bare().Update()
 
         self._setup = True
-
         return
 
     pass
