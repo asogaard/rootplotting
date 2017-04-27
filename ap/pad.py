@@ -20,8 +20,8 @@ except:
     raise
 
 # Local import(s)
-from tools import *
-from style import *
+from ..tools import *
+from ..style import *
 
 # Enum class, for easy handling different plotting cases
 def Enum(*sequential, **named):
