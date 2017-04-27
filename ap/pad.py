@@ -8,10 +8,6 @@
 @email:  andreas.sogaard@cern.ch
 """
 
-# Basic import(s)
-import sys
-sys.path.append("..")
-
 # Scientific import(s)
 import ROOT
 try:
@@ -23,9 +19,20 @@ except:
     print "or see e.g. [http://rootpy.github.io/root_numpy/start.html]."
     raise
 
-# Local import(s)
-from tools import *
-from style import *
+# Local import(s) -- not very pretty...
+try: 
+    # Running from external directory as "from rootplotting import ap"
+    from ..tools import *
+except ValueError: 
+    # Running from 'rootplotting' as "import ap"
+    from tools import *
+    pass
+try:
+    from ..style import *
+except ValueError:
+    from style import *
+    pass
+   
 
 # Enum class, for easy handling different plotting cases
 def Enum(*sequential, **named):
