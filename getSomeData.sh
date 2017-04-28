@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
 
-# Target directory for files
-DIR=data
+# Source- and target directories for test files
+SOURCE=/eos/atlas/user/a/asogaard/Analysis/2016/BoostedJetISR/outputObjdef/2017-04-27
+TARGET=data
 
 if [[ `echo $HOSTNAME | cut -c1-6` == "lxplus" ]]; then
     # Running on lxplus; simply create symbolic link
-    rm -f ./$DIR
-    ln -s /eos/atlas/user/a/asogaard/Analysis/2016/BoostedJetISR/outputObjdef/2017-04-27 $DIR
+    rm -f ./$TARGET
+    ln -s $SOURCE $TARGET
 
 else
     # Running elsewhere; copy files
@@ -15,10 +16,10 @@ else
     if [ ! $UNAME ]; then
 	echo "Not running on lxplus; please provide a username (UNAME)"
     else
-	mkdir -p $DIR
-	scp -r ${UNAME}@lxplus.cern.ch:/afs/cern.ch/work/a/asogaard/public/Analysis/2016/BoostedJetISR/outputObjdef/objdef_MC_3610*.root ./$DIR/
-	scp -r ${UNAME}@lxplus.cern.ch:/afs/cern.ch/work/a/asogaard/public/Analysis/2016/BoostedJetISR/outputObjdef/objdef_MC_30543*.root ./$DIR/
-	scp -r ${UNAME}@lxplus.cern.ch:/afs/cern.ch/work/a/asogaard/public/Analysis/2016/BoostedJetISR/outputObjdef/objdef_MC_30544*.root ./$DIR/
+	mkdir -p $TARGET
+	scp -r $UNAME@lxplus.cern.ch:$SOURCE/objdef_MC_3610*.root  ./$TARGET/
+	scp -r $UNAME@lxplus.cern.ch:$SOURCE/objdef_MC_30543*.root ./$TARGET/
+	scp -r $UNAME@lxplus.cern.ch:$SOURCE/objdef_MC_30544*.root ./$TARGET/
     fi
     
 fi
