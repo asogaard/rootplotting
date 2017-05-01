@@ -7,6 +7,7 @@ Scripts for producing ROOT plots using a matplotlib-like interface.
 To setup and perform a first test of the package, you can do:
 ```
 $ git clone git@github.com:asogaard/rootplotting.git
+$ cd rootplotting
 $ # If you're not running on lxplus, set your lxplus username (UNAME) in getSomeData.sh
 $ source getSomeData.sh
 $ python example.py
