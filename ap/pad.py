@@ -590,6 +590,11 @@ class pad (object):
         # Check(s)
         # ...
             
+        # Normalise
+        if 'normalise' in kwargs and kwargs['normalise']:
+            hist.Scale(1./hist.Integral())
+            pass
+
         # Scale
         if scale and type(hist) != ROOT.THStack:
             hist.Scale(scale)
