@@ -252,22 +252,23 @@ class canvas (object):
 
         # Ratio pad
         ratio_pad = self._pads[-1]
+        if ratio_pad._get_first_primitive():
+            ratio_pad._bare().SetBottomMargin(0.30)
+            ratio_pad._bare().SetTopMargin   (0.040)
 
-        ratio_pad._bare().SetBottomMargin(0.30)
-        ratio_pad._bare().SetTopMargin   (0.040)
-
-        ratio_pad._xaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('x') * ratio_pad._scale[1])
-        ratio_pad._yaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * ratio_pad._scale[0])
-        ratio_pad._yaxis().SetNdivisions(505)
-        ratio_pad._xaxis().SetTickLength (ROOT.gStyle.GetTickLength ('x') * ratio_pad._scale[1])
-        if ratio_pad._ylim is not None:
-            axisrange = ratio_pad._ylim
-            ratio_pad._yaxis().SetRangeUser(*axisrange)
-            ratio_pad._get_first_primitive().SetMinimum(axisrange[0])
-            ratio_pad._get_first_primitive().SetMaximum(axisrange[1])
+            ratio_pad._xaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('x') * ratio_pad._scale[1])
+            ratio_pad._yaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * ratio_pad._scale[0])
+            ratio_pad._yaxis().SetNdivisions(505)
+            ratio_pad._xaxis().SetTickLength (ROOT.gStyle.GetTickLength ('x') * ratio_pad._scale[1])
+            if ratio_pad._ylim is not None:
+                axisrange = ratio_pad._ylim
+                ratio_pad._yaxis().SetRangeUser(*axisrange)
+                ratio_pad._get_first_primitive().SetMinimum(axisrange[0])
+                ratio_pad._get_first_primitive().SetMaximum(axisrange[1])
+                pass
+            ratio_pad._bare().Modified()
+            ratio_pad._bare().Update()
             pass
-        ratio_pad._bare().Modified()
-        ratio_pad._bare().Update()
 
         self._setup = True
         return

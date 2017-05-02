@@ -683,7 +683,7 @@ class pad (object):
         first = False
         if self._stack is None:
             self._stack = ROOT.THStack('stack', "")
-            ROOT.SetOwnership(self._stack, False)
+            ROOT.SetOwnership(self._stack, 0)
             first = True
             pass
         
