@@ -494,7 +494,7 @@ class pad (object):
                 hist = self._plot1D      (data, display=False,   **kwargs)
                 return self._plot1D_stack(hist, display=display, **kwargs)
             else:
-                return self._plot1D      (data, display=display, **kwargs)
+                return self._plot1D      (data.Clone(data.GetName() + '_clone'), display=display, **kwargs)
 
         else:
             warning("Input data type not recognised:")
@@ -632,7 +632,7 @@ class pad (object):
                 
                 opt = self._get_label_option(option, hist)
                 
-                if kwargs['label'].strip().lower() == 'data':
+                if 'data' in kwargs['label'].strip().lower():
                     self._entries.insert(0, (hist, kwargs['label'], opt))
                 else:
                     self._entries.append((hist, kwargs['label'], opt))
