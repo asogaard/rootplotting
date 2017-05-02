@@ -8,6 +8,9 @@
 @email:  andreas.sogaard@cern.ch
 """
 
+# Basic import(s)
+import time
+
 # Scientific import(s)
 import ROOT
 try:
@@ -494,7 +497,9 @@ class pad (object):
                 hist = self._plot1D      (data, display=False,   **kwargs)
                 return self._plot1D_stack(hist, display=display, **kwargs)
             else:
-                return self._plot1D      (data.Clone(data.GetName() + '_clone'), display=display, **kwargs)
+                hist = data.Clone(data.GetName() + '_clone')
+                ROOT.SetOwnership(hist, 0)
+                return self._plot1D      (hist, display=display, **kwargs)
 
         else:
             warning("Input data type not recognised:")
@@ -547,7 +552,7 @@ class pad (object):
             # Assuming 'data' and 'bins' are sets of (x,y)-points
             h = ROOT.TGraph(len(bins), bins, data)
         else:
-            h = ROOT.TH1F('h_{}'.format(id(data)), "", len(bins) - 1, bins)
+            h = ROOT.TH1F('h_{:d}'.format(int(time.time()*1E+06)), "", len(bins) - 1, bins)
             if len(data) == len(bins) - 1:
                 # Assuming 'data' are bin values
                 array2hist(data, h)
@@ -649,18 +654,36 @@ class pad (object):
         return hist
 
 
-    def _ratio_plot1D (self, hists, option='', **kwargs):
+    def _ratio_plot1D (self, hists, option='', offset=None, **kwargs):
         """ ... """
 
         h = hists[0].Clone(hists[0].GetName() + '_ratio')
+        ROOT.SetOwnership(h, 0)
         for bin in range(1, h.GetXaxis().GetNbins() + 1):
             denom = hists[1].GetBinContent(bin)
             h.SetBinContent(bin, h.GetBinContent(bin) / denom if denom > 0 else 1)
             h.SetBinError  (bin, h.GetBinError  (bin) / denom if denom > 0 else 9999.)
             pass
 
+
+        # Add offset (opt.)
+        if offset is not None:
+            h_offset = h.Clone(h.GetName() + '_offset')
+            ROOT.SetOwnership(h_offset, 0)
+            for bin in range(1, h.GetXaxis().GetNbins() + 1):
+                h       .SetBinContent(bin, offset + h.GetBinContent(bin))
+                h_offset.SetBinContent(bin, offset)
+                h_offset.SetBinError  (bin, 0)
+                pass
+            pass
+
         # Plot histogram
-        return self._plot1D(h, option, **kwargs)
+        result = self._plot1D(h, option, **kwargs)
+        if offset is not None:
+            self._plot1D(h_offset, 'HIST', fillcolor=10)
+            self._get_first_primitive().Draw('AXIS SAME')
+            pass
+        return result
 
 
     @update
@@ -688,7 +711,6 @@ class pad (object):
         first = False
         if self._stack is None:
             self._stack = ROOT.THStack('stack', "")
-            ROOT.SetOwnership(self._stack, 0)
             first = True
             pass
         
