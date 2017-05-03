@@ -53,6 +53,7 @@ class pad (object):
     """
 
     def __init__(self, base, coords):
+        """ Constructor. """
         super(pad, self).__init__()
         
         # Check(s)
@@ -69,7 +70,7 @@ class pad (object):
         self._pad = ROOT.TPad('pad_{}_{}'.format(self._base._bare().GetName(), id(self)), "", *coords)
         self._coords = coords
         self._scale  = (1./float(coords[2] - coords[0]), 1./float(coords[3] - coords[1]))
-
+        
         # -- Book-keeping
         self._primitives = list()
         self._entries = list()
@@ -89,6 +90,14 @@ class pad (object):
         self._base._bare().Update()
         return
 
+
+    def __del__ (self):
+        """ Destructor. """
+        for p in self._primitives: 
+            del p
+            pass
+        del self._pad
+        return
 
 
     # Decorators
@@ -394,7 +403,7 @@ class pad (object):
 
         # Create legend
         self._legend = ROOT.TLegend(xmin, ymin, xmax, ymax)
-
+        
         if header:
             self._legend.AddEntry(None, header, '')
             pass
@@ -498,7 +507,6 @@ class pad (object):
                 return self._plot1D_stack(hist, display=display, **kwargs)
             else:
                 hist = data.Clone(data.GetName() + '_clone')
-                ROOT.SetOwnership(hist, 0)
                 return self._plot1D      (hist, display=display, **kwargs)
 
         else:
@@ -537,7 +545,7 @@ class pad (object):
 
     def _plot1D_numpy (self, data, bins, weights=None, option='', **kwargs):
         """ ... """
-
+        
         # Check(s)
         if bins is None:
             warning("You need to specify 'bins' when plotting a numpy-type input.")
@@ -601,7 +609,7 @@ class pad (object):
             pass
 
         # Scale
-        if scale and type(hist) != ROOT.THStack:
+        if scale is not None and type(hist) != ROOT.THStack:
             hist.Scale(scale)
             pass
 
@@ -617,36 +625,37 @@ class pad (object):
             pass
 
         # Only plot if requested
-        if display is None or not display: 
-            return hist
+        if display : 
+            
+            # Draw histograms
+            if type(hist) in [ROOT.THStack, ROOT.TGraph]:
+                hist.Draw(option)
+            else:
+                hist.DrawCopy(option)
+                pass
+            
+            # Store reference to primitive
+            self._primitives.append(hist)
 
-        # Draw histograms
-        if type(hist) in [ROOT.THStack, ROOT.TGraph]:
-            hist.Draw(option)
-        else:
-            hist.DrawCopy(option)
-            pass
-        
-        # Store reference to primitive
-        self._primitives.append(hist)
+            # Check whether several filled histograms have been added
+            if (type(hist) == ROOT.THStack or hist.GetFillColor() != 0) and len(filter(lambda h: type(h) == ROOT.THStack or (type(h).__name__.startswith('TH') and h.GetFillColor() != 0 and not option.startswith('E')), self._primitives)) == 2:
+                warning("Several filled, non-stacked histograms have been added. This may be misleading.")
+                pass
 
-        # Check whether several filled histograms have been added
-        if (type(hist) == ROOT.THStack or hist.GetFillColor() != 0) and len(filter(lambda h: type(h) == ROOT.THStack or (type(h).__name__.startswith('TH') and h.GetFillColor() != 0 and not option.startswith('E')), self._primitives)) == 2:
-            warning("Several filled, non-stacked histograms have been added. This may be misleading.")
-            pass
+            if type(hist) != ROOT.THStack:
 
-        if type(hist) != ROOT.THStack:
-
-            # Store legend entry
-            if 'label' in kwargs and kwargs['label'] is not None:
-                
-                opt = self._get_label_option(option, hist)
-                
-                if 'data' in kwargs['label'].strip().lower():
-                    self._entries.insert(0, (hist, kwargs['label'], opt))
-                else:
-                    self._entries.append((hist, kwargs['label'], opt))
+                # Store legend entry
+                if 'label' in kwargs and kwargs['label'] is not None:
+                    
+                    opt = self._get_label_option(option, hist)
+                    
+                    if 'data' in kwargs['label'].strip().lower():
+                        self._entries.insert(0, (hist, kwargs['label'], opt))
+                    else:
+                        self._entries.append((hist, kwargs['label'], opt))
+                        pass
                     pass
+
                 pass
 
             pass
@@ -658,7 +667,6 @@ class pad (object):
         """ ... """
 
         h = hists[0].Clone(hists[0].GetName() + '_ratio')
-        ROOT.SetOwnership(h, 0)
         for bin in range(1, h.GetXaxis().GetNbins() + 1):
             denom = hists[1].GetBinContent(bin)
             h.SetBinContent(bin, h.GetBinContent(bin) / denom if denom > 0 else 1)
@@ -669,7 +677,6 @@ class pad (object):
         # Add offset (opt.)
         if offset is not None:
             h_offset = h.Clone(h.GetName() + '_offset')
-            ROOT.SetOwnership(h_offset, 0)
             for bin in range(1, h.GetXaxis().GetNbins() + 1):
                 h       .SetBinContent(bin, offset + h.GetBinContent(bin))
                 h_offset.SetBinContent(bin, offset)
@@ -697,11 +704,16 @@ class pad (object):
             self._entries.insert(idx, (hist, kwargs['label'], self._get_label_option(option, hist)))
             pass
 
+        # Scale etc.
+        kwargs['display'] = False
+        hist = self._plot1D(hist, option=option, **kwargs)
+        kwargs.pop('display')
+
         first = self._add_to_stack(hist)
         if first:
             self._plot1D(self._stack, option=option, **kwargs)
             pass
-
+        
         return hist
 
 

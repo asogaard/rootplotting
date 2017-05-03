@@ -33,7 +33,7 @@ except ValueError:
     from style import *
     pass
     
-from pad import *
+from pad import pad
 
 
 # Class definition
@@ -43,7 +43,8 @@ class canvas (object):
     @TODO: Elaborate! 
     """
 
-    def __init__(self, num_pads=1, size=None, fraction=0.3, batch=False, ratio=True):
+    def __init__ (self, num_pads=1, size=None, fraction=0.3, batch=False, ratio=True):
+        """ Constructor. """
         super(canvas, self).__init__()
         
         ROOT.gROOT.SetBatch(batch)
@@ -77,6 +78,15 @@ class canvas (object):
             self._canvas.Update()
             pass
 
+        return
+
+
+    def __del__ (self):
+        """ Destructor. """
+        for p in self._pads:
+            del p
+            pass
+        del self._canvas
         return
 
 

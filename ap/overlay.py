@@ -33,14 +33,18 @@ except ValueError:
     from style import *
     pass
    
-from pad import *
+from pad import pad
 
 
 # Class definition
 class overlay (pad):
-    """ docstring for overlay """
+    """
+    docstring for overlay
+    @TODO: Elaborate!
+    """
 
-    def __init__(self, base, color=ROOT.kRed):
+    def __init__ (self, base, color=ROOT.kRed):
+        """ Constructor. """
         # Check if canvas
         if hasattr(base, 'pads'):
             base = base.pads()[0]
