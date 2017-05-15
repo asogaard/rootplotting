@@ -53,7 +53,7 @@ def loadXsec (path, delimiter=',', comment='#'):
     return xsec
 
 
-def loadData (paths, tree, branches=None, start=None, stop=None, step=None):
+def loadData (paths, tree, branches=None, start=None, stop=None, step=None, prefix=None):
     """ Load data from ROOT TTree. """
     
     # Initialise output
@@ -87,10 +87,11 @@ def loadData (paths, tree, branches=None, start=None, stop=None, step=None):
         data = append_fields(data, 'id', np.ones((data.size,)) * ipath, dtypes=int)
         
         # Concatenate
+        # Note: Force to be of tyoe numpy.ndarray, to avoid errors with mask when renaming
         if output is None:
-            output = data
+            output = np.array(data, dtype=data.dtype)
         else:
-            output = np.concatenate((output,data))
+            output = np.array(np.concatenate((output,data)), dtype=output.dtype)
             pass
 
         pass
@@ -98,7 +99,13 @@ def loadData (paths, tree, branches=None, start=None, stop=None, step=None):
     # Check(s)
     if output is None:
         warning("No data was loaded")
+    else:
+        # Remove prefix (opt.)
+        if prefix:
+            output.dtype.names = [name.replace(prefix, '') for name in output.dtype.names] 
+            pass
         pass
+    
 
     return output
 
