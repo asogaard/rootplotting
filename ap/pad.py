@@ -194,6 +194,7 @@ class pad (object):
 
         # Store axis limits
         self._ylim = args
+        self._update()
         return
 
 
@@ -217,7 +218,7 @@ class pad (object):
     @cd
     def line (self, x1, y1, x2, y2):
         """ ... """
-
+        
         # Check(s)
         if self._line is None:
             self._line = ROOT.TLine()
@@ -270,7 +271,10 @@ class pad (object):
         """ ... """
         
         ymin, ymax = self._pad.GetUymin(), self._pad.GetUymax()
-        self.line(x, ymin, x, ymin)
+        if not self._ylim:
+            ymax = max(map(get_maximum, self._primitives))
+            pass
+        self.line(x, ymin, x, ymax)
         return
 
 
@@ -344,7 +348,7 @@ class pad (object):
                 xmax=None,
                 ymin=None,
                 ymax=None,
-                width=0.30,
+                width=0.32,
                 horisontal='R',
                 vertical='T'):
         """ Draw legend on TPad. """
@@ -605,7 +609,9 @@ class pad (object):
             
         # Normalise
         if 'normalise' in kwargs and kwargs['normalise']:
-            hist.Scale(1./hist.Integral())
+            if hist.Integral() > 0.:
+                hist.Scale(1./hist.Integral())
+                pass
             pass
 
         # Scale
