@@ -219,6 +219,31 @@ def warning (string):
     return
 
 
+def snapToAxis (x, axis):
+    """ ... """
+
+    bin = axis.FindBin(x)
+    if   bin <= 0:
+        xdraw = axis.GetXmin()
+    elif bin > axis.GetNbins():
+        xdraw = axis.GetXmax()
+    else:
+        down   = axis.GetBinLowEdge(bin)
+        up     = axis.GetBinUpEdge (bin)
+        middle = axis.GetBinCenter (bin)
+
+        # Assuming snap to nearest edge. # @TODO: Improve?
+        d1 = abs(x - down);
+        d2 = abs(x - up);
+        if d1 == d2:
+            warning("Coordinate exactly in the middle of bin. Returning lower edge.")
+            pass
+        if (d1 <= d2): xdraw = down
+        else:          xdraw = up
+        pass
+    return xdraw
+
+
 def wait ():
     """ Generic wait function.
 
