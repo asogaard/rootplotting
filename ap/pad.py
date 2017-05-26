@@ -504,7 +504,7 @@ class pad (object):
             else:
                 return self._plot1D_numpy(data, display=display, **kwargs)
 
-        elif type(data).__name__.startswith('TH1'):
+        elif type(data).__name__.startswith('TH1') or type(data).__name__.startswith('TProfile'):
             # ROOT TH1-type
             if plottype == PlotType.stack:
                 hist = self._plot1D      (data, display=False,   **kwargs)
