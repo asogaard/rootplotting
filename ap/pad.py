@@ -271,7 +271,7 @@ class pad (object):
         return
 
 
-    def xline (self, x):
+    def xline (self, x, snap=False):
         """ ... """       
 
         xdraw = x

@@ -61,6 +61,7 @@ class canvas (object):
         self._canvas = ROOT.TCanvas('c_{}'.format(id(self)), "", self._size[0], self._size[1])
         self._ratio = ratio and self._num_pads == 2
         self._setup = False
+        self._existinglines = set() # X-axis lines already for previous regions
         
         # -- Pads
         self._pads = list()
