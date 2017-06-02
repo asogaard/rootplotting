@@ -82,7 +82,8 @@ class pad (object):
         self._padding = 0.4
         self._log  = False
         self._ylim = None
-        self._line = None
+        self._line  = None
+        self._latex = None
         
         # Draw pad
         self._base._bare().cd()
@@ -170,6 +171,7 @@ class pad (object):
         return get_stack_sum(self._stack)
 
 
+    @update
     def log (self, log=True):
         """ ... """
 
@@ -182,6 +184,7 @@ class pad (object):
         return
 
 
+    @update
     def ylim (self, *args):
         """ ... """
 
@@ -198,6 +201,7 @@ class pad (object):
         return
 
 
+    @update
     def padding (self, padding):
         """ ... """
 
@@ -268,14 +272,19 @@ class pad (object):
 
 
     def xline (self, x):
-        """ ... """
-        
+        """ ... """       
+
+        xdraw = x
+        if snap:
+            xdraw = snapToAxis(x)
+            pass
+
         ymin, ymax = self._pad.GetUymin(), self._pad.GetUymax()
-        if not self._ylim:
+        if self._base._pads.index(self) == 0:
             ymax = max(map(get_maximum, self._primitives))
             pass
-        self.line(x, ymin, x, ymax)
-        return
+        self.line(xdraw, ymin, xdraw, ymax)
+        return xdraw
 
 
 
@@ -338,6 +347,26 @@ class pad (object):
             y -= ystep;
             pass
 
+        return
+
+
+    @cd
+    @update
+    def latex (self, string, x, y, align=21, NDC=False):
+        """ ... """
+
+        # Check(s)
+        if self._latex is None:
+            self._latex = ROOT.TLatex()
+            pass
+        self._latex.SetTextAlign(align)
+
+        # Draw line
+        if NDC:
+            self._latex.DrawLatexNDC(x, y, string)
+        else:
+            self._latex.DrawLatex(x, y, string)
+            pass
         return
 
 
@@ -499,7 +528,8 @@ class pad (object):
         if type(data).__module__.startswith(np.__name__):
             # Numpy-type
             if plottype == PlotType.stack:
-                hist = self._plot1D_numpy(data, display=False,   **kwargs)
+                scale = kwargs.pop('scale', None) # Scale only once!
+                hist = self._plot1D_numpy(data, display=False,   scale=scale, **kwargs)
                 return self._plot1D_stack(hist, display=display, **kwargs)
             else:
                 return self._plot1D_numpy(data, display=display, **kwargs)
@@ -507,7 +537,8 @@ class pad (object):
         elif type(data).__name__.startswith('TH1') or type(data).__name__.startswith('TProfile'):
             # ROOT TH1-type
             if plottype == PlotType.stack:
-                hist = self._plot1D      (data, display=False,   **kwargs)
+                scale = kwargs.pop('scale', None) # Scale only once!
+                hist = self._plot1D      (data, display=False,   scale=scale, **kwargs)
                 return self._plot1D_stack(hist, display=display, **kwargs)
             else:
                 hist = data.Clone(data.GetName() + '_clone')
@@ -795,14 +826,19 @@ class pad (object):
         # Check if anything has been drawn
         if self._get_first_primitive() and self._yaxis():
             self._get_first_primitive().SetMinimum(axisrange[0]) # For THStack. @TODO: Improve?
-            self._get_first_primitive().SetMaximum(axisrange[1])
+            self._get_first_primitive().SetMaximum(axisrange[1]) # ...
+            self._yaxis().SetRangeUser(*axisrange)
+            if hasattr(self._get_first_primitive(), 'GetHistogram'):
+                self._get_first_primitive().GetHistogram().SetMinimum(axisrange[0])
+                self._get_first_primitive().GetHistogram().SetMaximum(axisrange[1])
+                self._get_first_primitive().GetHistogram().GetYaxis().SetRangeUser(*axisrange)
+                pass
 
             # Style
             # @TODO: Move into a 'style' method
             if is_canvas(self._base): # if 'pad' on 'canvas'
                 self._yaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * self._base._size[1]       / float(self._base._size[0]))
                 pass
-            self._yaxis().SetRangeUser(*axisrange)
             
             self._xaxis().SetTickLength(ROOT.gStyle.GetTickLength('x') * self._scale[1])
             self._yaxis().SetTickLength(ROOT.gStyle.GetTickLength('y') * self._scale[0])

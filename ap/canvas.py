@@ -229,6 +229,47 @@ class canvas (object):
         return
     
 
+    def region (self, name, xmin, xmax, offset=0.10):
+        """ ... """
+
+        # Check(s)
+        # ...
+
+        # Main pad
+        pad = self._pads[0]
+        pad._bare().cd()
+
+        axis = pad._get_first_primitive().GetXaxis()
+        xmin = snapToAxis(xmin, axis)
+        xmax = snapToAxis(xmax, axis)
+
+        drawmin = xmin not in self._existinglines
+        drawmax = xmax not in self._existinglines
+
+        self._existinglines.add(xmin)
+        self._existinglines.add(xmax)
+
+        if drawmin: xmin = pad.xline(xmin)
+        if drawmax: xmax = pad.xline(xmax)
+
+        xNDC = (0.5 * (xmin + xmax) - axis.GetXmin()) / (axis.GetXmax() - axis.GetXmin())
+        xNDC = pad._pad.GetLeftMargin() + xNDC * (1 - pad._pad.GetLeftMargin() - pad._pad.GetRightMargin())
+
+        pad.latex(name, xNDC, offset, NDC=True)
+
+        # Remaining pads (opt.)
+        for idx in range(1,len(self._pads)):
+            pad = self._pads[idx]
+            if is_overlay(pad): continue
+            pad._bare().cd()
+
+            if drawmin: xmin = pad.xline(xmin)
+            if drawmax: xmax = pad.xline(xmax)
+            pass
+
+        return
+
+
 
     # Private accessor methods
     # ----------------------------------------------------------------
