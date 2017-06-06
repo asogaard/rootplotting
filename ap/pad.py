@@ -77,6 +77,8 @@ class pad (object):
         self._stack = None
         self._legend = None
         self._children = list()
+        self._oob_up   = None
+        self._oob_down = None
 
         # -- Plotting cosmetics
         self._padding = 0.4
@@ -189,6 +191,14 @@ class pad (object):
         """ ... """
 
         # Check(s)
+        if len(args) == 0: # Accessor
+            if self._ylim is None:
+                return self._pad.GetUymin(), self._pad.GetUymax()
+            else:
+                return self._ylim
+                pass
+            pass
+
         if type(args) == list and len(args) == 1:
             self.ylim(*args)
             return
@@ -279,7 +289,7 @@ class pad (object):
             xdraw = snapToAxis(x)
             pass
 
-        ymin, ymax = self._pad.GetUymin(), self._pad.GetUymax()
+        ymin, ymax = self.ylim()
         if self._base._pads.index(self) == 0:
             ymax = max(map(get_maximum, self._primitives))
             pass
@@ -420,7 +430,7 @@ class pad (object):
         # Setting y coordinates.
         if not (ymin or ymax):
             if   vertical.upper() == 'T':
-                ymax = 1.0 - self._pad.GetTopMargin() - offset - fontsize / float(h) * 1.8
+                ymax = 1.0 - self._pad.GetTopMargin() - offset - fontsize / float(h) * 1.7
             elif vertical.upper() == 'B':
                 ymin = self._pad.GetBottomMargin() + offset
             else:
@@ -662,7 +672,7 @@ class pad (object):
             pass
 
         # Only plot if requested
-        if display : 
+        if display:
             
             # Draw histograms
             if type(hist) in [ROOT.THStack, ROOT.TGraph]:
@@ -693,6 +703,32 @@ class pad (object):
                         pass
                     pass
 
+                pass
+
+            # Out-of-bounds markers
+            if 'oob' in kwargs and kwargs['oob'] and 'oob' not in hist.GetName():
+                if self._oob_up or self._oob_down:
+                    warning("Out-of-bounds markers already exists.")
+                    pass
+                if self._ylim is None:
+                    warning("Y-axis limits not set.")
+                    pass
+                self._oob_up   = hist.Clone(hist.GetName() + '_oob_up')
+                self._oob_down = hist.Clone(hist.GetName() + '_oob_down')
+                ymin, ymax = self.ylim()
+                diff = ymax - ymin
+                for bin in range(1, hist.GetXaxis().GetNbins() + 1):
+                    c = hist.GetBinContent(bin)
+                    if c > ymax: self._oob_up  .SetBinContent(bin, ymin + diff * 0.9)
+                    else:        self._oob_up  .SetBinContent(bin, -9999.)
+                    if c < ymin: self._oob_down.SetBinContent(bin, ymin + diff * 0.1)
+                    else:        self._oob_down.SetBinContent(bin, -9999.)
+                    self._oob_up  .SetBinError(bin, 0)
+                    self._oob_down.SetBinError(bin, 0)
+                    pass
+                self._plot1D(self._oob_up,   markercolor=ROOT.kBlue, markerstyle=22, markersize=1.2, option='P HIST')
+                self._plot1D(self._oob_down, markercolor=ROOT.kBlue, markerstyle=23, markersize=1.2, option='P HIST')
+                # ...
                 pass
 
             pass
@@ -805,7 +841,7 @@ class pad (object):
             except ValueError: # only stacked histogram
                 ymin = 0.
                 pass
-            ymin_positive = 2. # min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None]) # @TODO: Improve
+            ymin_positive = 100. # min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None]) # @TODO: Improve
             for hist in self._primitives:
                 ymax = max(get_maximum(hist), ymax)
                 pass
