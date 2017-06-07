@@ -451,16 +451,21 @@ class pad (object):
             self._legend.AddEntry(None, header, '')
             pass
 
-        # @TODO: Defer to parent pad, if 'overlay'
+        # @TODO: Defer to parent pad, if 'overlay' (?)
         for (h,n,t) in self._get_all_entries(): 
             if type(h) == ROOT.THStack: continue
             self._legend.AddEntry(h, n, t)
             pass
 
-        # @TODO: Improve
+        # Add categories (opt.)
         if categories:
-            for icat, (name, hist, opt) in enumerate(categories):
-                self._legend.AddEntry(hist, name, opt)
+            for icat, (name, kwargs) in enumerate(categories):
+                hist = ROOT.TH1F(name, "", 1, 0, 1)
+                self._primitives.append(hist)
+                if 'linecolor'   in kwargs: kwargs['linecolor']   = ROOT.kGray + 2
+                if 'markercolor' in kwargs: kwargs['markercolor'] = ROOT.kGray + 2
+                self._style(hist, **kwargs)
+                self._legend.AddEntry(hist, name, kwargs.get('option', ''))
                 pass
             pass
 
@@ -694,7 +699,7 @@ class pad (object):
                 # Store legend entry
                 if 'label' in kwargs and kwargs['label'] is not None:
                     
-                    opt = self._get_label_option(option, hist)
+                    opt = kwargs.get('legend_option', self._get_label_option(option, hist))
                     
                     if 'data' in kwargs['label'].strip().lower():
                         self._entries.insert(0, (hist, kwargs['label'], opt))
