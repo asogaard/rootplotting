@@ -75,7 +75,7 @@ class pad (object):
         self._primitives = list()
         self._entries = list()
         self._stack = None
-        self._legend = None
+        self._legends = list()
         self._children = list()
         self._oob_up   = None
         self._oob_down = None
@@ -83,7 +83,10 @@ class pad (object):
         # -- Plotting cosmetics
         self._padding = 0.4
         self._log  = False
+        self._logx = False
+        self._xlim = None
         self._ylim = None
+        self._ymin = None # For log-plots
         self._line  = None
         self._latex = None
         
@@ -160,6 +163,10 @@ class pad (object):
         """ ... """
         return self._ratio_plot(PlotType.plot, data, **kwargs)
 
+    def diff_plot (self, data, **kwargs):
+        """ ... """
+        return self._diff_plot(PlotType.plot, data, **kwargs)
+
 
 
     # Public accessor/mutator methods
@@ -182,6 +189,49 @@ class pad (object):
 
         # Set log
         self._log = log
+        self._update()
+        return
+
+
+    @update
+    def logx (self, logx=True):
+        """ ... """
+
+        # Check(s)
+        assert type(logx) == bool, "Logx parameter must be a boolean"
+
+        # Set logx
+        self._logx = logx
+        self._update()
+        return
+    
+
+    def logy (self, **kwargs):
+        """ Alias method for 'log'. """
+        return self.log(**kwargs)
+
+
+    @update
+    def xlim (self, *args):
+        """ ... """
+
+        # Check(s)
+        if len(args) == 0: # Accessor
+            if self._xlim is None:
+                return self._pad.GetUxmin(), self._pad.GetUxmax()
+            else:
+                return self._xlim
+                pass
+            pass
+
+        if type(args) == list and len(args) == 1:
+            self.xlim(*args)
+            return
+
+        assert len(args) == 2, "X-axis limits have size {}, which is different from two as required.".format(len(xlim))
+
+        # Store axis limits
+        self._xlim = args
         self._update()
         return
 
@@ -212,6 +262,19 @@ class pad (object):
 
 
     @update
+    def ymin (self, ymin):
+        """ ... """
+
+        # Check(s)
+        # ...
+
+        # Store axis limits
+        self._ymin = ymin
+        self._update()
+        return
+
+
+    @update
     def padding (self, padding):
         """ ... """
 
@@ -230,58 +293,57 @@ class pad (object):
     # ----------------------------------------------------------------
 
     @cd
-    def line (self, x1, y1, x2, y2):
+    def line (self, x1, y1, x2, y2, **kwargs):
         """ ... """
         
         # Check(s)
-        if self._line is None:
-            self._line = ROOT.TLine()
-            self._line.SetLineStyle(2)
-            self._line.SetLineColor(ROOT.kGray + 3)
-            pass
+        self._line = ROOT.TLine()
+        self._line.SetLineStyle(2)
+        self._line.SetLineColor(ROOT.kGray + 3)
+        self._style_line(self._line, **kwargs)
 
         # Draw line
         self._line.DrawLine(x1, y1, x2, y2)
         return
 
 
-    def lines (self, coords):
+    def lines (self, coords, **kwargs):
         """ ... """
 
         for coord in coords:
-            self.line(*coord)
+            self.line(*coord, **kwargs)
             pass
         return
 
 
-    def ylines (self, ys):
+    def ylines (self, ys, **kwargs):
         """ ... """
 
         for y in ys: 
-            self.yline(y)
+            self.yline(y, **kwargs)
             pass
         return
 
 
-    def xlines (self, xs):
+    def xlines (self, xs, **kwargs):
         """ ... """
 
         for x in xs: 
-            self.xline(x)
+            self.xline(x, **kwargs)
             pass
         return
 
 
-    def yline (self, y):
+    def yline (self, y, **kwargs):
         """ ... """
         
         xaxis = self._xaxis()
-        xmin, xmax = xaxis.GetXmin(), xaxis.GetXmax()
-        self.line(xmin, y, xmax, y)
+        xmin, xmax = self.xlim() # xaxis.GetXmin(), xaxis.GetXmax()
+        self.line(xmin, y, xmax, y, **kwargs)
         return
 
 
-    def xline (self, x, snap=False):
+    def xline (self, x, snap=False, text=None, text_horisontal='L', text_vertical='T',  **kwargs):
         """ ... """       
 
         xdraw = x
@@ -290,10 +352,66 @@ class pad (object):
             pass
 
         ymin, ymax = self.ylim()
+
         if self._base._pads.index(self) == 0:
             ymax = max(map(get_maximum, self._primitives))
             pass
-        self.line(xdraw, ymin, xdraw, ymax)
+        self.line(xdraw, ymin, xdraw, ymax, **kwargs)
+
+        if text is not None:
+            # Default settings
+            offset = 0.005 * (self.xlim()[1] - self.xlim()[0])
+            angle = 270
+            align = 11
+            ydraw = ymax
+
+            opts = {'textcolor': ROOT.kGray+1, 'textsize': 13}
+            if 'linecolor' in kwargs:
+                opts['textcolor'] = kwargs['linecolor']
+                pass
+
+
+            if   text_horisontal == 'R':
+                #offset *= -1
+                angle = 270
+                #align = (align//10)*10 + 3
+                pass
+            elif text_horisontal == 'L':
+                offset *= -1
+                angle = 90
+                #align = (align//10)*10 + 3
+            else:
+                warning('...')
+                pass
+
+            if   text_vertical == 'T':
+                if   text_horisontal == 'L':
+                    align = align%10 + 30
+                elif text_horisontal == 'R':
+                    align = align%10 + 10
+                    pass
+                pass
+                ydraw = ymax
+            elif text_vertical == 'M':
+                align = align%10 + 20
+                ydraw = (ymin + ymax) * 0.5
+            elif text_vertical == 'B':
+                if   text_horisontal == 'L':
+                    align = align%10 + 10
+                elif text_horisontal == 'R':
+                    align = align%10 + 30
+                    pass
+                ydraw = ymin + abs(offset)
+            else:
+                warning('...')
+                pass
+
+
+            self.latex(text, xdraw + offset, ydraw, angle=angle, align=align, **opts)
+
+            #warning("Argument 'textside' with value '%s' no recognised." % text_horisontal)
+            pass
+
         return xdraw
 
 
@@ -362,14 +480,14 @@ class pad (object):
 
     @cd
     @update
-    def latex (self, string, x, y, align=21, NDC=False):
+    def latex (self, string, x, y, align=21, angle=0, NDC=False, **kwargs):
         """ ... """
 
         # Check(s)
-        if self._latex is None:
-            self._latex = ROOT.TLatex()
-            pass
+        self._latex = ROOT.TLatex()
         self._latex.SetTextAlign(align)
+        self._latex.SetTextAngle(angle)
+        self._style_text(self._latex, **kwargs)
 
         # Draw line
         if NDC:
@@ -387,20 +505,26 @@ class pad (object):
                 xmax=None,
                 ymin=None,
                 ymax=None,
-                width=0.32,
+                width=0.32, # 0.32 / 0.28
                 horisontal='R',
-                vertical='T'):
+                vertical='T',
+                reverse=False,
+                sort=False):
         """ Draw legend on TPad. """
 
         # Check(s)
         N = len(self._get_all_entries())
-        if N == 0:
+        if (N == 0) and (categories is None or len(categories) == 0) and (header is None):
             return
 
-        if self._legend:
+        if len(self._legends) > 0:
             warning('A legend has already been constructed.')
-            return
-        
+            pass
+
+        if reverse and sort: 
+            warning("Requesting reversed _and_ sorted legend. Will default to the former.")
+            pass
+
         # Compute drawing coordinates
         h = self._pad.GetWh() / self._scale[1]
         w = self._pad.GetWw() / self._scale[0]
@@ -445,31 +569,83 @@ class pad (object):
             pass
 
         # Create legend
-        self._legend = ROOT.TLegend(xmin, ymin, xmax, ymax)
+        self._legends.append(ROOT.TLegend(xmin, ymin, xmax, ymax))
         
         if header:
-            self._legend.AddEntry(None, header, '')
+            self._legends[-1].AddEntry(None, header, '')
             pass
 
         # @TODO: Defer to parent pad, if 'overlay' (?)
-        for (h,n,t) in self._get_all_entries(): 
-            if type(h) == ROOT.THStack: continue
-            self._legend.AddEntry(h, n, t)
+        if reverse or sort:
+
+            stored = list()
+
+            # Data
+            for (h,n,t) in self._get_all_entries(): 
+                if type(h) == ROOT.THStack: continue
+                if 'data' in n.lower():
+                    self._legends[-1].AddEntry(h, n, t)
+                    stored.append(h)
+                    pass
+                pass
+
+            # Non-uncertainties
+            if reverse:
+                for (h,n,t) in reversed(self._get_all_entries()): 
+                    if type(h) == ROOT.THStack: continue
+                    if h in stored: continue
+                    if 'uncert' in n.lower() or 'stat.' in n.lower() or 'syst.' in n.lower(): continue
+                    self._legends[-1].AddEntry(h, n, t)
+                    stored.append(h)
+                    pass
+            elif sort:
+                # Sorting: Data, filled histgorams, line histograms, uncertainties
+                for (h,n,t) in reversed(sorted(self._get_all_entries(), key=lambda tup: tup[0].Integral())): 
+                    if type(h) == ROOT.THStack: continue
+                    if h in stored: continue
+                    if 'uncert' in n.lower() or 'stat.' in n.lower() or 'syst.' in n.lower() or ('f' not in t.lower()): continue
+                    self._legends[-1].AddEntry(h, n, t)
+                    stored.append(h)
+                    pass
+                for (h,n,t) in reversed(sorted(self._get_all_entries(), key=lambda tup: tup[0].Integral())): 
+                    if type(h) == ROOT.THStack: continue
+                    if h in stored: continue
+                    if 'uncert' in n.lower() or 'stat.' in n.lower() or 'syst.' in n.lower() or ('f' in t.lower()): continue
+                    self._legends[-1].AddEntry(h, n, t)
+                    stored.append(h)
+                    pass
+                pass
+
+            # Rest (uncert.)
+            for (h,n,t) in self._get_all_entries(): 
+                if type(h) == ROOT.THStack: continue
+                if h in stored: continue
+                self._legends[-1].AddEntry(h, n, t)
+                pass
+        else:
+            for (h,n,t) in self._get_all_entries(): 
+                if type(h) == ROOT.THStack: continue
+                self._legends[-1].AddEntry(h, n, t)
+                pass
             pass
 
         # Add categories (opt.)
         if categories:
             for icat, (name, kwargs) in enumerate(categories):
                 hist = ROOT.TH1F(name, "", 1, 0, 1)
+                hist.SetBinContent(0, 1) # To avoid warning from get_minimum_positive
                 self._primitives.append(hist)
-                if 'linecolor'   in kwargs: kwargs['linecolor']   = ROOT.kGray + 2
-                if 'markercolor' in kwargs: kwargs['markercolor'] = ROOT.kGray + 2
+                if 'linecolor'   not in kwargs: kwargs['linecolor']   = ROOT.kGray + 3
+                if 'markercolor' not in kwargs: kwargs['markercolor'] = ROOT.kGray + 3
                 self._style(hist, **kwargs)
-                self._legend.AddEntry(hist, name, kwargs.get('option', ''))
+                self._legends[-1].AddEntry(hist, name, kwargs.get('option', 'L'))
                 pass
             pass
 
-        self._legend.Draw()
+        self._legends[-1].Draw()
+        
+        # Clear entries (allowing for multiple legends)
+        self._clear_all_entries()
         return
     
 
@@ -540,8 +716,8 @@ class pad (object):
             kwargs['option'] = self._get_plot_option(plottype)
             pass
 
-        if type(data).__module__.startswith(np.__name__):
-            # Numpy-type
+        if type(data).__module__.startswith(np.__name__) or type(data) == list:
+            # Numpy-/list-type
             if plottype == PlotType.stack:
                 scale = kwargs.pop('scale', None) # Scale only once!
                 hist = self._plot1D_numpy(data, display=False,   scale=scale, **kwargs)
@@ -549,8 +725,8 @@ class pad (object):
             else:
                 return self._plot1D_numpy(data, display=display, **kwargs)
 
-        elif type(data).__name__.startswith('TH1') or type(data).__name__.startswith('TProfile'):
-            # ROOT TH1-type
+        elif type(data).__name__.startswith('TH1') or type(data).__name__.startswith('TProfile') or type(data).__name__.startswith('TGraph'):
+            # ROOT 1D-type
             if plottype == PlotType.stack:
                 scale = kwargs.pop('scale', None) # Scale only once!
                 hist = self._plot1D      (data, display=False,   scale=scale, **kwargs)
@@ -560,7 +736,7 @@ class pad (object):
                 return self._plot1D      (hist, display=display, **kwargs)
 
         else:
-            warning("Input data type not recognised:")
+            warning("_plot: Input data type not recognised:")
             print type(data[0])
             pass
         
@@ -571,23 +747,49 @@ class pad (object):
         """ ... """
 
         # Check(s)
-        assert type(data) == type(data), "Input data types must match"
+        assert type(data[0]) == type(data[1]), "Input data types must match"
 
         # Get plot option
         if 'option' not in kwargs:
             kwargs['option'] = self._get_plot_option(plottype)
             pass
             
-        if type(data[0]).__module__.startswith(np.__name__):
-            # Numpy-type
+        if type(data[0]).__module__.startswith(np.__name__) or type(data) == list:
+            # Numpy-/list-type
             return self._ratio_plot1D_numpy(data, **kwargs)
 
-        elif type(data[0]).__name__.startswith('TH1'):
-            # ROOT TH1-type
+        elif type(data[0]).__name__.startswith('TH1') or type(data[0]) == ROOT.TProfile:
+            # ROOT-type
             return self._ratio_plot1D      (data, **kwargs)
 
         else:
-            warning("Input data type not recognised:")
+            warning("_ratio_plot: Input data type not recognised:")
+            print type(data[0])
+            pass
+        return None
+
+
+    def _diff_plot (self, plottype, data, **kwargs):
+        """ ... """
+
+        # Check(s)
+        assert type(data[0]) == type(data[1]), "Input data types must match"
+
+        # Get plot option
+        if 'option' not in kwargs:
+            kwargs['option'] = self._get_plot_option(plottype)
+            pass
+            
+        if type(data[0]).__module__.startswith(np.__name__) or type(data) == list:
+            # Numpy-/list-type
+            return self._diff_plot1D_numpy(data, **kwargs)
+
+        elif type(data[0]).__name__.startswith('TH1'):
+            # ROOT TH1-type
+            return self._diff_plot1D      (data, **kwargs)
+
+        else:
+            warning("_diff_plot: Input data type not recognised:")
             print type(data[0])
             pass
         return None
@@ -608,9 +810,9 @@ class pad (object):
         # Fill histogram
         if len(data) == len(bins):
             # Assuming 'data' and 'bins' are sets of (x,y)-points
-            h = ROOT.TGraph(len(bins), bins, data)
+            h = ROOT.TGraph(len(bins), np.array(bins), np.array(data))
         else:
-            h = ROOT.TH1F('h_{:d}'.format(int(time.time()*1E+06)), "", len(bins) - 1, bins)
+            h = ROOT.TH1F('h_{:d}'.format(int(time.time()*1E+06)), "", len(bins) - 1, np.array(bins))
             if len(data) == len(bins) - 1:
                 # Assuming 'data' are bin values
                 array2hist(data, h)
@@ -645,6 +847,27 @@ class pad (object):
         return _ratio_plot1D((h1,h2), option, **kwargs)
 
 
+    def _diff_plot1D_numpy (self, data, bins, weights=None, option='', **kwargs):
+        """ ... """
+
+        # Check(s)
+        if bins is None:
+            warning("You need to specify 'bins' when plotting a numpy-type input.")
+            return
+
+        if len(bins) < 2:
+            warning("Number of bins {} is not accepted".format(len(bins)))
+            return
+
+        # Fill histogram
+        h1 = ROOT.TH1F('h_num_{}'.format(id(data)), "", len(bins) - 1, bins)
+        h2 = ROOT.TH1F('h_den_{}'.format(id(data)), "", len(bins) - 1, bins)
+        fill_hist(h1, data[0], weights=weights[0])
+        fill_hist(h2, data[1], weights=weights[1])
+        
+        return _diff_plot1D((h1,h2), option, **kwargs)
+
+
     @cd
     @update
     def _plot1D (self, hist, option='', display=True, scale=None, **kwargs):
@@ -656,7 +879,8 @@ class pad (object):
         # Normalise
         if 'normalise' in kwargs and kwargs['normalise']:
             if hist.Integral() > 0.:
-                hist.Scale(1./hist.Integral())
+                #hist.Scale(1./hist.Integral())
+                hist.Scale(1./hist.Integral(0, hist.GetXaxis().GetNbins() + 1))
                 pass
             pass
 
@@ -680,7 +904,7 @@ class pad (object):
         if display:
             
             # Draw histograms
-            if type(hist) in [ROOT.THStack, ROOT.TGraph]:
+            if type(hist) in [ROOT.THStack, ROOT.TGraph, ROOT.TGraphErrors]:
                 hist.Draw(option)
             else:
                 hist.DrawCopy(option)
@@ -741,16 +965,57 @@ class pad (object):
         return hist
 
 
-    def _ratio_plot1D (self, hists, option='', offset=None, **kwargs):
+    def _ratio_plot1D (self, hists, option='', offset=None, default=1, **kwargs):
         """ ... """
 
-        h = hists[0].Clone(hists[0].GetName() + '_ratio')
+        # Check(s)
+        if type(hists[0]) == ROOT.TProfile:
+            # Create a new TH1 histogram, instead of cloning, in case inputs are TProfiles for which SetBinContent makes little sense.
+            ax = hists[0].GetXaxis()
+            h = ROOT.TH1F(hists[0].GetName() + '_ratio', "", ax.GetNbins(), ax.GetXmin(), ax.GetXmax()) 
+        else:
+            # Clone if inputs are standard ROOT TH1*'s , in order to keep any style applied previously
+            h = hists[0].Clone(hists[0].GetName() + '_ratio')
+            pass
+        
+        # Fill bins with ratio
         for bin in range(1, h.GetXaxis().GetNbins() + 1):
+            num   = hists[0].GetBinContent(bin)
+            num_e = hists[0].GetBinError  (bin)
             denom = hists[1].GetBinContent(bin)
-            h.SetBinContent(bin, h.GetBinContent(bin) / denom if denom > 0 else 1)
-            h.SetBinError  (bin, h.GetBinError  (bin) / denom if denom > 0 else 9999.)
+            h.SetBinContent(bin, num   / denom if denom > 0 else default)
+            h.SetBinError  (bin, num_e / denom if denom > 0 else 9999.)
             pass
 
+
+        # Add offset (opt.)
+        if offset is not None:
+            h_offset = h.Clone(h.GetName() + '_offset')
+            for bin in range(1, h.GetXaxis().GetNbins() + 1):
+                h       .SetBinContent(bin, offset + h.GetBinContent(bin))
+                h_offset.SetBinContent(bin, offset)
+                h_offset.SetBinError  (bin, 0)
+                pass
+            pass
+
+        # Plot histogram
+        result = self._plot1D(h, option, **kwargs)
+        if offset is not None:
+            self._plot1D(h_offset, 'HIST', fillcolor=10)
+            self._get_first_primitive().Draw('AXIS SAME')
+            pass
+        return result
+
+
+    def _diff_plot1D (self, hists, option='', offset=None, **kwargs):
+        """ ... """
+
+        h = hists[0].Clone(hists[0].GetName() + '_diff')
+        h.Add(hists[1], -1)
+        #for bin in range(1, h.GetXaxis().GetNbins() + 1):
+        #    denom = hists[1].GetBinContent(bin)
+        #    h.SetBinContent(bin, h.GetBinContent(bin) - denom)
+        #    pass
 
         # Add offset (opt.)
         if offset is not None:
@@ -821,6 +1086,14 @@ class pad (object):
         """ ... """
         return self._entries + [entry for child in self._children for entry in child._entries]
 
+    def _clear_all_entries (self):
+        """ ... """
+        self._entries = list()
+        for child in self._children:
+            child._clear_all_entries()
+            pass
+        return
+
 
     @update
     def _update (self, only_this=True):
@@ -831,10 +1104,16 @@ class pad (object):
         # Check(s)
         if len(self._primitives) == 0 or not hasattr(self._pad, 'SetLogy'): return
         
+        # Set x-axis limits
+        if self._xlim:
+            self._xaxis().SetRangeUser(*self._xlim)
+            pass
+
         # Set y-axis log./lin. scale
         self._pad.SetLogy(self._log)
+        self._pad.SetLogx(self._logx)
         
-        # Set axis limits with padding
+        # Set y-axis limits with padding
         axisrange = (None,None)
         if self._ylim:
             axisrange = self._ylim
@@ -842,16 +1121,23 @@ class pad (object):
             ymin, ymax = inf, -inf
             
             try:
-                ymin          = min([v for v in map(get_minimum,          self._primitives) if v is not None])
+                ymin = min(filter(lambda y: y is not None, map(get_minimum, self._primitives)))
             except ValueError: # only stacked histogram
                 ymin = 0.
                 pass
-            ymin_positive = 100. # min([v for v in map(get_minimum_positive, self._primitives[idx_pad]) if v is not None]) # @TODO: Improve
+
+            #ymin_positive = 100. # 
             for hist in self._primitives:
                 ymax = max(get_maximum(hist), ymax)
                 pass
 
             if self._log:
+                if self._ymin:
+                    ymin_positive = self._ymin
+                else:
+                    ymin_positive = min(filter(lambda y: y is not None, map(get_minimum_positive, self._primitives)))
+                    ymin_positive *= 0.8
+                    pass
                 axisrange = (ymin_positive, np.exp((np.log(ymax) - np.log(ymin_positive)) / (1. - self._padding) + np.log(ymin_positive)))
             else:
                 axisrange = (0, ymax / (1. - self._padding) )
@@ -919,6 +1205,60 @@ class pad (object):
                 pass
             pass
         
+        if 'alpha' in kwargs:
+            if 'fillcolor' in kwargs:
+                h.SetFillColorAlpha(kwargs['fillcolor'], kwargs['alpha'])
+            else:
+                warning("Set 'alpha' without 'fillcolor'.")
+                pass
+            pass
+
+        return
+
+
+    def _style_line (self, l, **kwargs): # @TODO: Should these be utility functions?
+        """ ..."""
+
+        # Check(s)
+        # ...
+
+        # Dispatch style methods
+        dispatch = {
+            'linestyle': l.SetLineStyle,
+            'linecolor': l.SetLineColor,
+            'linewidth': l.SetLineWidth,
+        }
+
+        for var, setter in dispatch.items():
+            if var in kwargs:
+                setter(kwargs[var])
+                pass
+            pass
+        
+        return
+
+
+    def _style_text (self, t, **kwargs): # @TODO: Should these be utility functions?
+        """ ..."""
+
+        # Check(s)
+        # ...
+
+        # Dispatch style methods
+        dispatch = {
+            'textfont':  t.SetTextFont,
+            'textcolor': t.SetTextColor,
+            'textsize':  t.SetTextSize,
+            'textalign': t.SetTextAlign,
+            'textangle': t.SetTextAngle,
+        }
+
+        for var, setter in dispatch.items():
+            if var in kwargs:
+                setter(kwargs[var])
+                pass
+            pass
+        
         return
 
 
@@ -946,7 +1286,7 @@ class pad (object):
         if   plottype == PlotType.plot:  option = 'PE0'
         elif plottype == PlotType.hist:  option = 'HIST'
         elif plottype == PlotType.stack: option = 'HIST'
-        elif plottype == PlotType.graph: option = 'PL' # APL
+        elif plottype == PlotType.graph: option = ('A' if len(self._primitives) == 0 else '') + 'PE0' # 'PL'
         else:
             warning("Plot type '{}' not recognised".format(plottype.name))
             pass
