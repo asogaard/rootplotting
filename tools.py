@@ -91,7 +91,21 @@ def loadData (paths, tree, branches=None, start=None, stop=None, step=None, pref
         if output is None:
             output = np.array(data, dtype=data.dtype)
         else:
-            output = np.array(np.concatenate((output,data)), dtype=output.dtype)
+            try:
+                output = np.array(np.concatenate((output,data)), dtype=output.dtype)
+            except TypeError:
+                warning("Inconsistency in the types of the structured arrays being concatenated.")
+                existing = output.dtype.names
+                new      = data  .dtype.names
+                warning("Existing:")
+                for name in existing:
+                    warning("  '%s' %s" % (name, '<---' if name not in new else ''))
+                    pass
+                warning("New:")
+                for name in new:
+                    warning("  '%s' %s" % (name, '<---' if name not in existing else ''))
+                    pass
+                raise
             pass
 
         pass
@@ -106,9 +120,58 @@ def loadData (paths, tree, branches=None, start=None, stop=None, step=None, pref
             pass
         pass
     
-
     return output
 
+
+def scale_weights (data, info, xsec=None, lumi=None, verbose=False):
+    """ Scale data array by (opt.) cross section x efficiency and (opt.) luminosity. """
+
+    # Check(s)
+    if xsec is None and lumi is None:
+        warning("Neither cross section nor luminosity provided. Nothing to do here.")
+        return data
+
+    # Append DSID field to 'data' array
+    data = append_fields(data, 'DSID', np.zeros((data.size,)), dtypes=int)
+
+    # Loop file indices in 'info' array
+    for idx in info['id']:
+
+        if verbose:
+            print "Processing index %d out of %d:" % (idx + 1, len(info['id']))
+            pass
+
+        # Get mask of all 'data' entries with same id, i.e. from same file
+        msk = (data['id'] == idx)
+
+        # Get DSID for this file
+        DSID = info['DSID'][idx]
+
+        if verbose:
+            print "-- Got DSID %d" % DSID
+            print "-- Cross section available for this DSID? %s" % ("YES" if DSID in xsec else "NO")
+            if DSID in xsec:
+                print "-- Scaling by cross section:", xsec[DSID]
+                pass
+            pass
+
+        # Scale by cross section x filter eff. for this DSID
+        if DSID in xsec:
+            data['weight'][msk] *= xsec[DSID]
+        else:
+            warning("DSID %d not found in cross section dict." % DSID)
+            pass
+
+        # Store DSID
+        data['DSID'][msk] = DSID
+        pass
+
+    # Scale by luminosity
+    if lumi is not None:
+        data['weight'] *= lumi
+        pass
+
+    return data
 
 
 def get_maximum (hist):
@@ -117,12 +180,12 @@ def get_maximum (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_maximum(get_stack_sum(hist))
-    elif type(hist) == ROOT.TGraph:
+    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors]:
         N = hist.GetN()
-        output, x, y = ROOT.Double(-inf), ROOT.Double(0), ROOT.Double(-inf)
+        output, x, y = -inf, ROOT.Double(0), ROOT.Double(-inf)
         for i in range(N):
             hist.GetPoint(i, x, y)
-            output = max(output,y)
+            output = max(float(output),float(y))
             pass
         return output
 
@@ -143,12 +206,12 @@ def get_minimum (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_minimum(get_stack_sum(hist))
-    elif type(hist) == ROOT.TGraph:
+    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors]:
         N = hist.GetN()
-        output, x, y = ROOT.Double(inf), ROOT.Double(0), ROOT.Double(inf)
+        output, x, y = inf, ROOT.Double(0), ROOT.Double(inf)
         for i in range(N):
             hist.GetPoint(i, x, y)
-            output = min(output,y)
+            output = min(float(output),float(y))
             pass
         return output
 
@@ -157,7 +220,7 @@ def get_minimum (hist):
     except ValueError:
         warning("get_minimum: No bins were found.")
     except:
-        warning("get_maximum: Something didn't work here, for intput:")
+        warning("get_minimum: Something didn't work here, for intput:")
         print hist
         pass
     return None
@@ -167,14 +230,14 @@ def get_minimum_positive (hist):
 
     # Check(s)
     if type(hist) == ROOT.THStack:
-        return get_minimum_positive(get_stack_sum(hist))
-    elif type(hist) == ROOT.TGraph:
+        return inf if hist.GetNhists() == 0 else get_minimum_positive(hist.GetStack()[0])#get_minimum_positive(get_stack_sum(hist))
+    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors]:
         N = hist.GetN()
-        output, x, y = ROOT.Double(inf), ROOT.Double(0), ROOT.Double(inf)
+        output, x, y = inf, ROOT.Double(0), ROOT.Double(inf)
         for i in range(N):
             hist.GetPoint(i, x, y)
             if x <= 0: continue
-            output = min(output,y)
+            output = min(float(output),float(y))
             pass
         return output
 
