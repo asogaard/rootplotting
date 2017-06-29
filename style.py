@@ -8,8 +8,8 @@
 @email:  andreas.sogaard@cern.ch
 """
 
-from ROOT  import *
-from array import *
+import ROOT
+from array import array
 
 # Global style variables.
 font = 43
@@ -19,15 +19,17 @@ fontSizeM = 20
 fontSizeL = 21
 
 kMyBlue  = 1701;
-myBlue   = TColor(kMyBlue,   0./255.,  30./255.,  59./255.)
+myBlue   = ROOT.TColor(kMyBlue,   0./255.,  30./255.,  59./255.)
 kMyRed   = 1702;
-myRed    = TColor(kMyRed,  205./255.,   0./255.,  55./255.)
-kMyGreen = kGreen + 2
-kMyLightGreen = kGreen - 10
+myRed    = ROOT.TColor(kMyRed,  205./255.,   0./255.,  55./255.)
+kMyGreen = ROOT.kGreen + 2
+kMyLightGreen = ROOT.kGreen - 10
 
+colours       = [ROOT.kViolet + 7, ROOT.kAzure + 7, ROOT.kTeal,     ROOT.kSpring - 2, ROOT.kOrange - 3, ROOT.kPink    ]
+colours_light = [ROOT.kViolet - 9, ROOT.kAzure + 6, ROOT.kTeal - 4, ROOT.kSpring - 4, ROOT.kOrange - 2, ROOT.kPink - 4]
 
 # Custom style definition.
-AStyle = TStyle('AStyle', "AStyle")
+AStyle = ROOT.TStyle('AStyle', "AStyle")
 
 # -- Canvas colours
 AStyle.SetFrameBorderMode(0)
@@ -39,11 +41,10 @@ AStyle.SetPadColor(0)
 AStyle.SetStatColor(0)
 
 # -- Canvas size and margins
-
 AStyle.SetPadRightMargin (0.05)
 AStyle.SetPadBottomMargin(0.15)
 AStyle.SetPadLeftMargin  (0.15)
-AStyle.SetPadTopMargin   (0.05)
+AStyle.SetPadTopMargin   (0.06) # 0.05
 AStyle.SetTitleOffset(1.2, 'x')
 AStyle.SetTitleOffset(2.0, 'y')
 AStyle.SetTitleOffset(1.6, 'z')
@@ -96,8 +97,8 @@ def set_palette(name='palette', ncontours=999):
     b = array('d', blue)
 
     npoints = len(s)
-    TColor.CreateGradientColorTable(npoints, s, r, g, b, ncontours)
-    gStyle.SetNumberContours(ncontours)
+    ROOT.TColor.CreateGradientColorTable(npoints, s, r, g, b, ncontours)
+    ROOT.gStyle.SetNumberContours(ncontours)
     return
 
 set_palette()
@@ -105,5 +106,5 @@ set_palette()
 # Set (and force) style.
 # --------------------------------------------------------------------
 
-gROOT.SetStyle("AStyle")
-gROOT.ForceStyle()
+ROOT.gROOT.SetStyle("AStyle")
+ROOT.gROOT.ForceStyle()
