@@ -57,7 +57,8 @@ class canvas (object):
         # Member variables
         self._num_pads = num_pads
         self._fraction = fraction if num_pads == 2 else 0.
-        self._size = size or ((600, int(521.79/float(1. - fraction))) if (num_pads == 2 and ratio) else (600,600))
+        self._size = size or ((600, int(521.79/float(1. - 0.3))) if (num_pads == 2 and ratio) else (600,600))
+        #self._size = size or ((700, int(500. / 600. * 521.79/float(1. - fraction))) if (num_pads == 2 and ratio) else (700,500))
         self._canvas = ROOT.TCanvas('c_{}'.format(id(self)), "", self._size[0], self._size[1])
         self._ratio = ratio and self._num_pads == 2
         self._setup = False
@@ -135,6 +136,9 @@ class canvas (object):
     def text (self, *args, **kwargs): return
     """ Defer method to _first_ pad, by default """
 
+    @defer(0) 
+    def latex (self, *args, **kwargs): return
+
     @defer(0)
     def legend (self, *args,**kwargs): return
     
@@ -163,17 +167,32 @@ class canvas (object):
     @defer(-1)
     def ratio_plot (self, *args, **kwargs): return
 
+    @defer(-1)
+    def diff_plot (self, *args, **kwargs): return
+
     @defer(0)
     def getStackSum (self, *args, **kwargs): return
 
     @defer(0)
+    def xlim (self, *args, **kwargs): return
+
+    @defer(0)
     def ylim (self, *args, **kwargs): return
+
+    @defer(0)
+    def ymin (self, *args, **kwargs): return
 
     @defer(0)
     def padding (self, *args, **kwargs): return
 
     @defer(0)
     def log (self, *args, **kwargs): return
+
+    @defer(0)
+    def logx (self, *args, **kwargs): return
+
+    @defer(0)
+    def logy (self, *args, **kwargs): return
 
     @defer(0)
     def line (self, *args, **kwargs): return
@@ -244,6 +263,8 @@ class canvas (object):
         xmin = snapToAxis(xmin, axis)
         xmax = snapToAxis(xmax, axis)
 
+        if xmax <= self.xlim()[0] or xmin >= self.xlim()[1]: return
+
         drawmin = xmin not in self._existinglines
         drawmax = xmax not in self._existinglines
 
@@ -290,7 +311,7 @@ class canvas (object):
 
             main_pad._xaxis().SetLabelOffset(9999.)
             main_pad._xaxis().SetTitleOffset(9999.)
-            main_pad._bare().SetBottomMargin(0.030)
+            main_pad._bare().SetBottomMargin(0.030) # 0.03
             main_pad._bare().Modified()
             main_pad._bare().Update()
 
@@ -305,8 +326,8 @@ class canvas (object):
         # Ratio pad
         ratio_pad = self._pads[-1]
         if ratio_pad._get_first_primitive():
-            ratio_pad._bare().SetBottomMargin(0.30)
-            ratio_pad._bare().SetTopMargin   (0.040)
+            ratio_pad._bare().SetBottomMargin(0.30) # 0.30
+            ratio_pad._bare().SetTopMargin   (0.040) # 0.04
 
             ratio_pad._xaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('x') * ratio_pad._scale[1])
             ratio_pad._yaxis().SetTitleOffset(ROOT.gStyle.GetTitleOffset('y') * ratio_pad._scale[0])
