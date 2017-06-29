@@ -161,6 +161,12 @@ class overlay (pad):
         return
 
 
+    @update
+    def ylabel (self, label):
+        """ ... """
+        return self.label(label)
+
+
 
     # Private plotting methods
     # ----------------------------------------------------------------
