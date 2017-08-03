@@ -236,6 +236,7 @@ class pad (object):
         return
 
 
+    @cd
     @update
     def ylim (self, *args):
         """ ... """
@@ -333,7 +334,8 @@ class pad (object):
             pass
         return
 
-
+    
+    @cd
     def yline (self, y, **kwargs):
         """ ... """
         
@@ -343,8 +345,14 @@ class pad (object):
         return
 
 
-    def xline (self, x, snap=False, text=None, text_horisontal='L', text_vertical='T',  **kwargs):
+    @cd
+    def xline (self, x, snap=False, text=None, text_align='TL', **kwargs):
         """ ... """       
+
+        # Check(s)
+        if self._log:
+            warning("Calling 'xline' after 'log' will lead to problems in finding the correct lower end of the line. Please reverse the order.")
+            pass
 
         xdraw = x
         if snap:
@@ -352,7 +360,6 @@ class pad (object):
             pass
 
         ymin, ymax = self.ylim()
-
         if self._base._pads.index(self) == 0:
             ymax = max(map(get_maximum, self._primitives))
             pass
@@ -371,45 +378,39 @@ class pad (object):
                 pass
 
 
-            if   text_horisontal == 'R':
-                #offset *= -1
+            if   'R' in text_align.upper():
                 angle = 270
-                #align = (align//10)*10 + 3
                 pass
-            elif text_horisontal == 'L':
+            elif 'L' in text_align.upper():
                 offset *= -1
                 angle = 90
-                #align = (align//10)*10 + 3
             else:
-                warning('...')
+                warning("Neither 'R' nor 'L' (horisontal) found in 'text_align'.")
                 pass
 
-            if   text_vertical == 'T':
-                if   text_horisontal == 'L':
+            if   'T' in text_align.upper():
+                if   'L' in text_align.upper():
                     align = align%10 + 30
-                elif text_horisontal == 'R':
+                elif 'R' in text_align.upper():
                     align = align%10 + 10
                     pass
                 pass
                 ydraw = ymax
-            elif text_vertical == 'M':
+            elif 'M' in text_align.upper():
                 align = align%10 + 20
                 ydraw = (ymin + ymax) * 0.5
-            elif text_vertical == 'B':
-                if   text_horisontal == 'L':
+            elif 'B' in text_align.upper():
+                if   'L' in text_align.upper():
                     align = align%10 + 10
-                elif text_horisontal == 'R':
+                elif 'R' in text_align.upper():
                     align = align%10 + 30
                     pass
                 ydraw = ymin + abs(offset)
             else:
-                warning('...')
+                warning("Neither 'T', 'M', nor 'B' (vertical) found in 'text_align'")
                 pass
 
-
             self.latex(text, xdraw + offset, ydraw, angle=angle, align=align, **opts)
-
-            #warning("Argument 'textside' with value '%s' no recognised." % text_horisontal)
             pass
 
         return xdraw
@@ -904,7 +905,7 @@ class pad (object):
         if display:
             
             # Draw histograms
-            if type(hist) in [ROOT.THStack, ROOT.TGraph, ROOT.TGraphErrors]:
+            if type(hist) in [ROOT.THStack, ROOT.TGraph, ROOT.TGraphErrors, ROOT.TGraphAsymmErrors]:
                 hist.Draw(option)
             else:
                 hist.DrawCopy(option)
@@ -1127,9 +1128,10 @@ class pad (object):
                 pass
 
             #ymin_positive = 100. # 
-            for hist in self._primitives:
-                ymax = max(get_maximum(hist), ymax)
-                pass
+            ymax = max(map(get_maximum, self._primitives))
+            #for hist in self._primitives:
+            #    ymax = max(get_maximum(hist), ymax)
+            #    pass
 
             if self._log:
                 if self._ymin:

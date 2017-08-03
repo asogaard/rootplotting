@@ -81,7 +81,11 @@ def loadData (paths, tree, branches=None, start=None, stop=None, step=None, pref
             continue
 
         # Read TTree into numpy array
-        data = tree2array(t, branches=branches, start=start, stop=stop, step=step)
+        use_branches = branches
+        if None not in [prefix, branches]:
+            use_branches = [prefix + br for br in branches] + ['weight']
+            pass
+        data = tree2array(t, branches=use_branches, start=start, stop=stop, step=step)
 
         # Append id field
         data = append_fields(data, 'id', np.ones((data.size,)) * ipath, dtypes=int)
@@ -94,7 +98,7 @@ def loadData (paths, tree, branches=None, start=None, stop=None, step=None, pref
             try:
                 output = np.array(np.concatenate((output,data)), dtype=output.dtype)
             except TypeError:
-                warning("Inconsistency in the types of the structured arrays being concatenated.")
+                warning("Inconsistency in the types of the structured arrays being concatenated for path: " + path)
                 existing = output.dtype.names
                 new      = data  .dtype.names
                 warning("Existing:")
@@ -133,6 +137,7 @@ def scale_weights (data, info, xsec=None, lumi=None, verbose=False):
 
     # Append DSID field to 'data' array
     data = append_fields(data, 'DSID', np.zeros((data.size,)), dtypes=int)
+    data = append_fields(data, 'isMC', np.zeros((data.size,)), dtypes=bool)
 
     # Loop file indices in 'info' array
     for idx in info['id']:
@@ -144,8 +149,9 @@ def scale_weights (data, info, xsec=None, lumi=None, verbose=False):
         # Get mask of all 'data' entries with same id, i.e. from same file
         msk = (data['id'] == idx)
 
-        # Get DSID for this file
+        # Get DSID/isMC for this file
         DSID = info['DSID'][idx]
+        isMC = info['isMC'][idx]
 
         if verbose:
             print "-- Got DSID %d" % DSID
@@ -162,8 +168,9 @@ def scale_weights (data, info, xsec=None, lumi=None, verbose=False):
             warning("DSID %d not found in cross section dict." % DSID)
             pass
 
-        # Store DSID
+        # Store DSID/isMC
         data['DSID'][msk] = DSID
+        data['isMC'][msk] = isMC
         pass
 
     # Scale by luminosity
@@ -180,7 +187,7 @@ def get_maximum (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_maximum(get_stack_sum(hist))
-    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors]:
+    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors, ROOT.TGraphAsymmErrors]:
         N = hist.GetN()
         output, x, y = -inf, ROOT.Double(0), ROOT.Double(-inf)
         for i in range(N):
@@ -206,7 +213,7 @@ def get_minimum (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return get_minimum(get_stack_sum(hist))
-    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors]:
+    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors, ROOT.TGraphAsymmErrors]:
         N = hist.GetN()
         output, x, y = inf, ROOT.Double(0), ROOT.Double(inf)
         for i in range(N):
@@ -231,7 +238,7 @@ def get_minimum_positive (hist):
     # Check(s)
     if type(hist) == ROOT.THStack:
         return inf if hist.GetNhists() == 0 else get_minimum_positive(hist.GetStack()[0])#get_minimum_positive(get_stack_sum(hist))
-    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors]:
+    elif type(hist) in [ROOT.TGraph, ROOT.TGraphErrors, ROOT.TGraphAsymmErrors]:
         N = hist.GetN()
         output, x, y = inf, ROOT.Double(0), ROOT.Double(inf)
         for i in range(N):
@@ -255,8 +262,9 @@ def get_minimum_positive (hist):
 def get_stack_sum (stack):
     """ ... """
 
+    # @TODO: Errors are not being treated properly...
     sumHisto = None
-    for hist in stack.GetHists():
+    for hist in stack.GetHists(): ##stack.GetStack():
         if sumHisto is None:
             sumHisto = hist.Clone('sumHisto')
         else:

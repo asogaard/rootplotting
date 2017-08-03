@@ -249,7 +249,7 @@ class canvas (object):
         return
     
 
-    def region (self, name, xmin, xmax, offset=0.10):
+    def region (self, name, xmin, xmax, offset=0.10): # @TODO: do **kwargs for text- and line styling
         """ ... """
 
         # Check(s)
@@ -271,8 +271,8 @@ class canvas (object):
         self._existinglines.add(xmin)
         self._existinglines.add(xmax)
 
-        if drawmin: xmin = pad.xline(xmin)
-        if drawmax: xmax = pad.xline(xmax)
+        if drawmin: xmin = pad.xline(xmin, linewidth=2)
+        if drawmax: xmax = pad.xline(xmax, linewidth=2)
 
         xNDC = (0.5 * (xmin + xmax) - axis.GetXmin()) / (axis.GetXmax() - axis.GetXmin())
         xNDC = pad._pad.GetLeftMargin() + xNDC * (1 - pad._pad.GetLeftMargin() - pad._pad.GetRightMargin())
@@ -285,8 +285,8 @@ class canvas (object):
             if is_overlay(pad): continue
             pad._bare().cd()
 
-            if drawmin: xmin = pad.xline(xmin)
-            if drawmax: xmax = pad.xline(xmax)
+            if drawmin: xmin = pad.xline(xmin, linewidth=2)
+            if drawmax: xmax = pad.xline(xmax, linewidth=2)
             pass
 
         return
