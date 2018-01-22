@@ -80,6 +80,9 @@ AStyle.SetPadTickX(1)
 AStyle.SetPadTickY(1)
 AStyle.SetLegendBorderSize(0)
 
+# -- Error bars
+#AStyle.SetErrorX(0)
+
 # Colour palette.
 def set_palette(name='palette', ncontours=999):
     """Set a color palette from a given RGB list

@@ -140,14 +140,14 @@ def scale_weights (data, info, xsec=None, lumi=None, verbose=False):
     data = append_fields(data, 'isMC', np.zeros((data.size,)), dtypes=bool)
 
     # Loop file indices in 'info' array
-    for idx in info['id']:
+    for idx, id in enumerate(info['id']):
 
         if verbose:
             print "Processing index %d out of %d:" % (idx + 1, len(info['id']))
             pass
 
         # Get mask of all 'data' entries with same id, i.e. from same file
-        msk = (data['id'] == idx)
+        msk = (data['id'] == id)
 
         # Get DSID/isMC for this file
         DSID = info['DSID'][idx]
@@ -259,16 +259,21 @@ def get_minimum_positive (hist):
     return None
 
 
-def get_stack_sum (stack):
+def get_stack_sum (stack, only_first=True):
     """ ... """
 
-    # @TODO: Errors are not being treated properly...
-    sumHisto = None
-    for hist in stack.GetHists(): ##stack.GetStack():
-        if sumHisto is None:
-            sumHisto = hist.Clone('sumHisto')
-        else:
-            sumHisto.Add(hist)
+    # Kinda hacky...
+    if only_first:
+        sumHisto = stack.GetHists()[0].Clone('sumHisto')
+    else:
+        # @TODO: Errors are not being treated properly...
+        sumHisto = None
+        for hist in stack.GetHists(): ##stack.GetStack():
+            if sumHisto is None:
+                sumHisto = hist.Clone('sumHisto')
+            else:
+                sumHisto.Add(hist)
+                pass
             pass
         pass
     return sumHisto

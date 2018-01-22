@@ -177,7 +177,7 @@ class pad (object):
 
         # Check(s)
         if self._stack is None: return None
-        return get_stack_sum(self._stack)
+        return get_stack_sum(self._stack, only_first=False)
 
 
     @update
@@ -364,6 +364,7 @@ class pad (object):
             ymax = max(map(get_maximum, self._primitives))
             pass
         self.line(xdraw, ymin, xdraw, ymax, **kwargs)
+        print "Drawing line:", (xdraw, ymin, xdraw, ymax)
 
         if text is not None:
             # Default settings
@@ -376,6 +377,8 @@ class pad (object):
             if 'linecolor' in kwargs:
                 opts['textcolor'] = kwargs['linecolor']
                 pass
+            if 'textsize' in kwargs:
+                opts['textsize'] = kwargs['textsize']
 
 
             if   'R' in text_align.upper():
@@ -635,7 +638,8 @@ class pad (object):
             for icat, (name, kwargs) in enumerate(categories):
                 hist = ROOT.TH1F(name, "", 1, 0, 1)
                 hist.SetBinContent(0, 1) # To avoid warning from get_minimum_positive
-                self._primitives.append(hist)
+                self._add_to_primitives(hist)
+                #self._primitives.append(hist.Clone(hist.GetName() + "_prim"))
                 if 'linecolor'   not in kwargs: kwargs['linecolor']   = ROOT.kGray + 3
                 if 'markercolor' not in kwargs: kwargs['markercolor'] = ROOT.kGray + 3
                 self._style(hist, **kwargs)
@@ -880,8 +884,8 @@ class pad (object):
         # Normalise
         if 'normalise' in kwargs and kwargs['normalise']:
             if hist.Integral() > 0.:
-                #hist.Scale(1./hist.Integral())
-                hist.Scale(1./hist.Integral(0, hist.GetXaxis().GetNbins() + 1))
+                hist.Scale(1./hist.Integral())
+                #hist.Scale(1./hist.Integral(0, hist.GetXaxis().GetNbins() + 1))
                 pass
             pass
 
@@ -912,7 +916,8 @@ class pad (object):
                 pass
             
             # Store reference to primitive
-            self._primitives.append(hist)
+            self._add_to_primitives(hist)
+            hist = self._primitives[-1] # Reference the stored histogram
 
             # Check whether several filled histograms have been added
             if (type(hist) == ROOT.THStack or hist.GetFillColor() != 0) and len(filter(lambda h: type(h) == ROOT.THStack or (type(h).__name__.startswith('TH') and h.GetFillColor() != 0 and not option.startswith('E')), self._primitives)) == 2:
@@ -920,7 +925,6 @@ class pad (object):
                 pass
 
             if type(hist) != ROOT.THStack:
-
                 # Store legend entry
                 if 'label' in kwargs and kwargs['label'] is not None:
                     
@@ -963,7 +967,7 @@ class pad (object):
 
             pass
         
-        return hist
+        return hist # .Clone(hist.GetName().replace('_clone', ''))
 
 
     def _ratio_plot1D (self, hists, option='', offset=None, default=1, **kwargs):
@@ -1008,15 +1012,18 @@ class pad (object):
         return result
 
 
-    def _diff_plot1D (self, hists, option='', offset=None, **kwargs):
+    def _diff_plot1D (self, hists, option='', offset=None, uncertainties=True, **kwargs):
         """ ... """
 
         h = hists[0].Clone(hists[0].GetName() + '_diff')
-        h.Add(hists[1], -1)
-        #for bin in range(1, h.GetXaxis().GetNbins() + 1):
-        #    denom = hists[1].GetBinContent(bin)
-        #    h.SetBinContent(bin, h.GetBinContent(bin) - denom)
-        #    pass
+        if uncertainties:
+            h.Add(hists[1], -1)
+        else:
+            for bin in range(1, h.GetXaxis().GetNbins() + 1):
+                denom = hists[1].GetBinContent(bin)
+                h.SetBinContent(bin, h.GetBinContent(bin) - denom)
+                pass
+            pass
 
         # Add offset (opt.)
         if offset is not None:
@@ -1070,8 +1077,19 @@ class pad (object):
             first = True
             pass
         
-        self._stack.Add(hist, option)
+        self._stack.Add(hist.Clone(hist.GetName() + "_stack"), option)
         return first
+
+
+    def _add_to_primitives (self, hist):
+        """ ... """
+
+        if type(hist).__name__.startswith('TH1'):
+            self._primitives.append(hist)#.Clone(hist.GetName() + "_prim"))
+        else:
+            self._primitives.append(hist)
+            pass
+        return
 
 
 
@@ -1132,23 +1150,26 @@ class pad (object):
             #for hist in self._primitives:
             #    ymax = max(get_maximum(hist), ymax)
             #    pass
-
-            if self._log:
-                if self._ymin:
-                    ymin_positive = self._ymin
-                else:
-                    ymin_positive = min(filter(lambda y: y is not None, map(get_minimum_positive, self._primitives)))
-                    ymin_positive *= 0.8
-                    pass
-                axisrange = (ymin_positive, np.exp((np.log(ymax) - np.log(ymin_positive)) / (1. - self._padding) + np.log(ymin_positive)))
+            if ymax is None:
+                print "WARNING: Got `ymax == None`. Unable to set axis ranges properly."
             else:
-                axisrange = (0, ymax / (1. - self._padding) )
-                pass
-
-            # Set overlay axis limits
-            if is_overlay(self):
-                #self.lim(ymin, ymax)
-                self.lim(0, ymax, force=False) # @TODO: Fix. Getting ymin == ymax
+                if self._log:
+                    if self._ymin:
+                        ymin_positive = self._ymin
+                    else:
+                        ymin_positive = min(filter(lambda y: y is not None, map(get_minimum_positive, self._primitives)))
+                        ymin_positive *= 0.8
+                        pass
+                    axisrange = (ymin_positive, np.exp((np.log(ymax) - np.log(ymin_positive)) / (1. - self._padding) + np.log(ymin_positive)))
+                else:
+                    axisrange = (0, ymax / (1. - self._padding) )
+                    pass
+                
+                # Set overlay axis limits
+                if is_overlay(self):
+                    # self.lim(ymin, ymax)
+                    self.lim(0, ymax, force=False) # @TODO: Fix. Getting ymin == ymax
+                    pass
                 pass
             pass
 
