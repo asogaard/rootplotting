@@ -40,8 +40,7 @@ class canvas (object):
         # Member variables
         self._num_pads = num_pads
         self._fraction = fraction if num_pads == 2 else 0.
-        self._size = size or ((600, int(521.79/float(1. - 0.3))) if (num_pads == 2 and ratio) else (600,600))
-        #self._size = size or ((700, int(500. / 600. * 521.79/float(1. - fraction))) if (num_pads == 2 and ratio) else (700,500))
+        self._size = size or ((600, int(521.79/float(1. - 0.3))) if (num_pads == 2 and ratio) else (800,600))
         self._canvas = ROOT.TCanvas('c_{}'.format(id(self)), "", self._size[0], self._size[1])
         self._ratio = ratio and self._num_pads == 2
         self._setup = False
