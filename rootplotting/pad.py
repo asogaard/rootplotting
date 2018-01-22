@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Wrapper around ROOT TPad, handling plotting, labeling, text, and legend.
-
-@file:   pad.py
-@date:   26 April 2017
-@author: Andreas Søgaard
-@email:  andreas.sogaard@cern.ch
-"""
+""" Wrapper around ROOT TPad, handling plotting, labeling, text, and legend."""
 
 # Basic import(s)
 import time
@@ -22,19 +16,9 @@ except:
     print "or see e.g. [http://rootpy.github.io/root_numpy/start.html]."
     raise
 
-# Local import(s) -- not very pretty...
-try:
-    # Running from external directory as "from rootplotting import ap"
-    from ..tools import *
-except ValueError:
-    # Running from 'rootplotting' as "import ap"
-    from tools import *
-    pass
-try:
-    from ..style import *
-except ValueError:
-    from style import *
-    pass
+# Project import(s)
+from rootplotting.tools import *
+from rootplotting.style import *
 
 
 # Enum class, for easy handling different plotting cases

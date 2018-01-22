@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Wrapper around ROOT TCanvas, handling pads, showing, and saving. 
-
-@file:   canvas.py
-@date:   26 April 2017
-@author: Andreas Søgaard 
-@email:  andreas.sogaard@cern.ch
-"""
+""" Wrapper around ROOT TCanvas, handling pads, showing, and saving."""
 
 # Scientific import(s)
 import ROOT
@@ -19,36 +13,25 @@ except:
     print "or see e.g. [http://rootpy.github.io/root_numpy/start.html]."
     raise
 
-# Local import(s) -- not very pretty...
-try: 
-    # Running from external directory as "from rootplotting import ap"
-    from ..tools import *
-except ValueError: 
-    # Running from 'rootplotting' as "import ap"
-    from tools import *
-    pass
-try:
-    from ..style import *
-except ValueError:
-    from style import *
-    pass
-    
-from pad import pad
+# Project import(s)
+from rootplotting.tools import *
+from rootplotting.style import *
+from rootplotting import pad
 
 
 # Class definition
 class canvas (object):
-    """ 
-    docstring for canvas 
-    @TODO: Elaborate! 
+    """
+    docstring for canvas
+    @TODO: Elaborate!
     """
 
     def __init__ (self, num_pads=1, size=None, fraction=0.3, batch=False, ratio=True):
         """ Constructor. """
         super(canvas, self).__init__()
-        
+
         ROOT.gROOT.SetBatch(batch)
-        
+
         # Check(s)
         assert type(num_pads) == int, "Number of pads must be an integer"
         assert num_pads < 3, "Requested number of pads {} is too large".format(num_pads)
@@ -63,7 +46,7 @@ class canvas (object):
         self._ratio = ratio and self._num_pads == 2
         self._setup = False
         self._existinglines = set() # X-axis lines already for previous regions
-        
+
         # -- Pads
         self._pads = list()
         if   self._num_pads == 1:
@@ -74,7 +57,7 @@ class canvas (object):
             pass
 
         # Draw pads
-        for p in self._pads: 
+        for p in self._pads:
             self._canvas.cd()
             p._pad.Draw()
             self._canvas.Update()
@@ -132,23 +115,23 @@ class canvas (object):
         return inner
 
 
-    @defer(0) 
+    @defer(0)
     def text (self, *args, **kwargs): return
     """ Defer method to _first_ pad, by default """
 
-    @defer(0) 
+    @defer(0)
     def latex (self, *args, **kwargs): return
 
     @defer(0)
     def legend (self, *args,**kwargs): return
-    
-    @defer(-1) 
+
+    @defer(-1)
     def xlabel (self, *args, **kwargs): return
     """ Defer method to _last_ non-overlay pad, by default """
 
     @defer(0)
     def ylabel (self, *args, **kwargs): return
-    
+
     @defer(0)
     def plot (self, *args, **kwargs): return
 
@@ -157,10 +140,10 @@ class canvas (object):
 
     @defer(0)
     def hist2d (self, *args, **kwargs): return
-    
+
     @defer(0)
     def stack (self, *args, **kwargs): return
-    
+
     @defer(0)
     def graph (self, *args, **kwargs): return
 
@@ -196,19 +179,19 @@ class canvas (object):
 
     @defer(0)
     def line (self, *args, **kwargs): return
-    
+
     @defer(0)
     def lines (self, *args, **kwargs): return
 
     @defer(0)
     def xline (self, *args, **kwargs): return
-    
+
     @defer(0)
     def yline (self, *args, **kwargs): return
-        
+
     @defer(0)
     def xlines (self, *args, **kwargs): return
-    
+
     @defer(0)
     def ylines (self, *args, **kwargs): return
 
@@ -216,7 +199,7 @@ class canvas (object):
 
     # Public high-level/management methods
     # ----------------------------------------------------------------
-    
+
     def _update (self):
         """ ... """
 
@@ -247,7 +230,7 @@ class canvas (object):
         self._update()
         self._canvas.SaveAs(path)
         return
-    
+
 
     def region (self, name, xmin, xmax, offset=0.10): # @TODO: do **kwargs for text- and line styling
         """ ... """
@@ -295,7 +278,7 @@ class canvas (object):
 
     # Private accessor methods
     # ----------------------------------------------------------------
-    
+
     def _bare (self):
         """ ... """
         return self._canvas
@@ -347,4 +330,3 @@ class canvas (object):
         return
 
     pass
-    

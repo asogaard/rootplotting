@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Style sheet.
-
-@file:   style.py
-@date:   25 April 2017
-@author: Andreas Søgaard
-@email:  andreas.sogaard@cern.ch
-"""
+""" Style sheet."""
 
 import ROOT
 from array import array

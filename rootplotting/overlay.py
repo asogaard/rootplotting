@@ -1,12 +1,6 @@
 # -*- coding: utf-8 -*-
 
-""" Class derived from 'pad', allowing for overlaying pads on other pads
-
-@file:   overlay.py
-@date:   26 April 2017
-@author: Andreas Søgaard 
-@email:  andreas.sogaard@cern.ch
-"""
+""" Class derived from 'pad', allowing for overlaying pads on other pads."""
 
 # Scientific import(s)
 import ROOT
@@ -19,21 +13,10 @@ except:
     print "or see e.g. [http://rootpy.github.io/root_numpy/start.html]."
     raise
 
-# Local import(s) -- not very pretty...
-try: 
-    # Running from external directory as "from rootplotting import ap"
-    from ..tools import *
-except ValueError: 
-    # Running from 'rootplotting' as "import ap"
-    from tools import *
-    pass
-try:
-    from ..style import *
-except ValueError:
-    from style import *
-    pass
-   
-from pad import pad
+# Project import(s)
+from rootplotting.tools import *
+from rootplotting.style import *
+from rootplotting import pad
 
 
 # Class definition
@@ -53,20 +36,20 @@ class overlay (pad):
 
         # Check(s)
         # ...
-        
+
         base._update()
-        
+
         # Add 'self' to canvas' list of pads
         idx = base._base._pads.index(base)
         base._base._pads.insert(idx + 1, self)
-        
+
 
         # Member variables
         # -- Management
         self._base = base
         self._base_yaxis = base._yaxis()
         base._children.append(self)
-        
+
         # -- Plotting cosmetics
         self._axis  = None
         self._xmin  = 0
@@ -81,7 +64,7 @@ class overlay (pad):
         right_margin = 0.12
         c = base._base._bare() # Getting parent TCanvas; assuming 'canvas' > 'pad' > 'overlay' structure. @TODO: Improve?
         w_initial = 1 - c.GetLeftMargin() - c.GetRightMargin()
-        w_final   = 1 - c.GetLeftMargin() - right_margin           
+        w_final   = 1 - c.GetLeftMargin() - right_margin
         c.SetCanvasSize(int(c.GetWw() * w_initial / w_final), c.GetWh())
         for p in base._base._pads:
             p._bare().SetRightMargin(right_margin)
@@ -95,7 +78,7 @@ class overlay (pad):
         # Store coordinates
         self._xmin = base._xaxis().GetXmin()
         self._xmax = base._xaxis().GetXmax()
-        
+
         # Draw overlay pad and axis
         self._pad.Draw()
         self._pad.cd()
@@ -139,7 +122,7 @@ class overlay (pad):
 
     def lim (self, ymin, ymax, force=True):
         """ ... """
-        
+
         # Check(s)
         assert ymin < ymax, "Axis limits must be given in increasing order; recieved (%.1e, %.1e)" % (ymin, ymax)
 
@@ -150,7 +133,7 @@ class overlay (pad):
             self._lims_set = force
             self._update_axis()
             pass
-        
+
         return
 
 
@@ -174,7 +157,7 @@ class overlay (pad):
     @update
     def _update_overlay (self):
         """ ... """
-        
+
         # Pad
         if self._pad:
             self._pad.SetFillStyle(4000)
@@ -208,7 +191,7 @@ class overlay (pad):
 
         # Getting parent TCanvas; assuming 'canvas' > 'pad' > 'overlay' structure. @TODO: Improve?
         base = self._base._bare()
-        
+
         # Set proper ranges
         # @TODO: Make prettier?
         if self._lims_set:
@@ -227,7 +210,7 @@ class overlay (pad):
 
         dy   = (ymax       - ymin)       / (1. - base.GetTopMargin()  - base.GetBottomMargin())
         dx   = (self._xmax - self._xmin) / (1. - base.GetLeftMargin() - base.GetRightMargin())
-      
+
         # (Re-) set pad ranges
         self._pad.Range(self._xmin - base.GetLeftMargin()   * dx,
                         ymin       - base.GetBottomMargin() * dy,
@@ -236,7 +219,7 @@ class overlay (pad):
 
         # Create and draw axis
         self._axis = ROOT.TGaxis(self._xmax, ymin,
-                                 self._xmax, ymax, 
+                                 self._xmax, ymax,
                                  ymin, ymax, 510, "+L")
         self._axis.Draw()
 
@@ -248,4 +231,3 @@ class overlay (pad):
         return
 
     pass
-    

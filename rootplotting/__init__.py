@@ -3,8 +3,10 @@
 # instead of
 #   ap.pad.pad
 
-__all__ = ['pad', 'canvas', 'overlay']
+__all__ = ['pad', 'canvas', 'overlay', 'tools', 'style']
 
 from pad     import pad
 from canvas  import canvas
 from overlay import overlay
+from . import tools
+from . import style
