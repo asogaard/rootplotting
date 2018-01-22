@@ -100,6 +100,10 @@ def set_palette(name='palette', ncontours=999):
 
 set_palette()
 
+# Colours
+colours = [ROOT.kViolet + 7, ROOT.kAzure + 7, ROOT.kTeal, ROOT.kSpring - 2, ROOT.kOrange - 3, ROOT.kPink]
+
+
 # Set (and force) style.
 # --------------------------------------------------------------------
 

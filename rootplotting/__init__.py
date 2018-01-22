@@ -10,3 +10,4 @@ from canvas  import canvas
 from overlay import overlay
 from . import tools
 from . import style
+from style import colours
