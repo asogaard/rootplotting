@@ -1,10 +1,10 @@
 # -*- coding: utf-8 -*-
 
-""" Style sheet. 
+""" Style sheet.
 
 @file:   style.py
 @date:   25 April 2017
-@author: Andreas Søgaard 
+@author: Andreas Søgaard
 @email:  andreas.sogaard@cern.ch
 """
 
@@ -14,7 +14,7 @@ from array import array
 # Global style variables.
 font = 43
 
-fontSizeS = 20 
+fontSizeS = 20
 fontSizeM = 20
 fontSizeL = 21
 
@@ -110,4 +110,4 @@ set_palette()
 # --------------------------------------------------------------------
 
 ROOT.gROOT.SetStyle("AStyle")
-ROOT.gROOT.ForceStyle()
+#ROOT.gROOT.ForceStyle()
