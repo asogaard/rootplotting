@@ -9,7 +9,7 @@ To setup, do:
 $ git clone git@github.com:asogaard/rootplotting.git
 $ pip install -e rootplotting/
 ```
-Then, the tools in this package is available by importing `import rootplotting as rp` anywhere in python.
+Then, the tools in this package will be available by importing `import rootplotting as rp` anywhere in python.
 
 
 ## Contents
