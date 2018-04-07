@@ -359,8 +359,8 @@ class pad (object):
         if text is not None:
             # Default settings
             scale = kwargs.get('textsize', 13.) / 13.
-            xoffset = 0.005 * scale * (self.xlim()[1] - self.xlim()[0])
-            yoffset = 0.02  * scale
+            xoffset = 0.01 * scale * (self.xlim()[1] - self.xlim()[0])
+            yoffset = 0.04  * scale
             if self._log:
                 yoffset = np.exp(np.log(ymin) + yoffset * (np.log(ymax) - np.log(ymin)))
             else:
@@ -445,7 +445,7 @@ class pad (object):
 
     @cd
     @update
-    def text (self, lines=[], qualifier='', ATLAS=True, xmin=None, ymax=None):
+    def text (self, lines=[], qualifier='', ATLAS=True, xmin=None, ymax=None, **kwargs):
         """ ... """
 
         # Check(s)
@@ -453,6 +453,7 @@ class pad (object):
 
         # Create text instance
         t = ROOT.TLatex()
+        kwargs['align'] = kwargs.get('align', 11)
 
         # Compute drawing coordinates
         h = self._pad.GetWh() / self._scale[1] #* (1. - self._fraction) # @TODO: Improve
@@ -467,13 +468,16 @@ class pad (object):
 
         # Draw ATLAS line
         if ATLAS or qualifier:
-            t.DrawLatexNDC(x, y, "{ATLAS}{qualifier}".format(ATLAS="#scale[1.15]{#font[72]{ATLAS}}#scale[1.05]{  }" if ATLAS else "", qualifier= "#scale[1.05]{%s}" % qualifier))
+            line = "{ATLAS}{qualifier}".format(ATLAS="#scale[1.15]{#font[72]{ATLAS}}#scale[1.05]{  }" if ATLAS else "", qualifier= "#scale[1.05]{%s}" % qualifier)
+            self.latex(line, x, y, NDC=True, **kwargs)
+            #t.DrawLatexNDC(x, y, line)
             y -= ystep * 1.30
             pass
 
         # Draw lines.
         for line in lines:
-            t.DrawLatexNDC(x, y, line)
+            self.latex(line, x, y, NDC=True, **kwargs)
+            #t.DrawLatexNDC(x, y, line)
             y -= ystep;
             pass
 
@@ -575,6 +579,8 @@ class pad (object):
 
         if header:
             self._legends[-1].AddEntry(None, header, '')
+            self._legends[-1].GetListOfPrimitives()[0].SetTextSize(ROOT.gStyle.GetLegendTextSize() * 0.8)
+            self._legends[-1].GetListOfPrimitives()[0].SetTextColor(ROOT.kGray + 3)
             pass
 
         # @TODO: Defer to parent pad, if 'overlay' (?)
@@ -806,16 +812,16 @@ class pad (object):
             warning("You need to specify 'bins' when plotting a numpy-type input.")
             return
 
-        if len(bins) < 2:
+        if len(data) != len(bins) and len(bins) < 2:
             warning("Number of bins {} is not accepted".format(len(bins)))
             return
 
         # Fill histogram
         if len(data) == len(bins):
             # Assuming 'data' and 'bins' are sets of (x,y)-points
-            h = ROOT.TGraph(len(bins), np.array(bins), np.array(data))
+            h = ROOT.TGraph(len(bins), np.array(bins, dtype=np.float), np.array(data, dtype=np.float))
         else:
-            h = ROOT.TH1F('h_{:d}'.format(int(time.time()*1E+06)), "", len(bins) - 1, np.array(bins))
+            h = ROOT.TH1F('h_{:d}'.format(int(time.time()*1E+06)), "", len(bins) - 1, np.array(bins, dtype=np.float))
             if len(data) == len(bins) - 1:
                 # Assuming 'data' are bin values
                 array2hist(data, h)
@@ -948,18 +954,32 @@ class pad (object):
                 self._oob_up   = hist.Clone(hist.GetName() + '_oob_up')
                 self._oob_down = hist.Clone(hist.GetName() + '_oob_down')
                 ymin, ymax = self.ylim()
-                diff = ymax - ymin
+
+                offset = 0.1
+                if self._log:
+                    lymin, lymax = map(np.log10, (ymin, ymax))
+                    ldiff = lymax - lymin
+                    ooby_up   = np.power(10, lymax - offset * ldiff)
+                    ooby_down = np.power(10, lymin + offset * ldiff)
+                else:
+                    diff = ymax - ymin
+                    ooby_up   = ymax - offset * diff
+                    ooby_down = ymin + offset * diff
+                    pass
+                
                 for bin in range(1, hist.GetXaxis().GetNbins() + 1):
                     c = hist.GetBinContent(bin)
-                    if c > ymax: self._oob_up  .SetBinContent(bin, ymin + diff * 0.9)
+                    if c > ymax: self._oob_up  .SetBinContent(bin, ooby_up)
                     else:        self._oob_up  .SetBinContent(bin, -9999.)
-                    if c < ymin: self._oob_down.SetBinContent(bin, ymin + diff * 0.1)
+                    if c < ymin: self._oob_down.SetBinContent(bin, ooby_down)
                     else:        self._oob_down.SetBinContent(bin, -9999.)
                     self._oob_up  .SetBinError(bin, 0)
                     self._oob_down.SetBinError(bin, 0)
                     pass
-                self._plot1D(self._oob_up,   markercolor=ROOT.kBlue, markerstyle=22, markersize=1.2, option='P HIST')
-                self._plot1D(self._oob_down, markercolor=ROOT.kBlue, markerstyle=23, markersize=1.2, option='P HIST')
+
+                markercolor = kwargs.get('oob_color', ROOT.kBlue)
+                self._plot1D(self._oob_up,   markercolor=markercolor, markerstyle=22, markersize=1.0, option='P HIST')
+                self._plot1D(self._oob_down, markercolor=markercolor, markerstyle=23, markersize=1.0, option='P HIST')
                 # ...
                 pass
 

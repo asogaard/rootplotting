@@ -84,9 +84,12 @@ def set_palette(name='palette', ncontours=999):
     see set_decent_colors for an example"""
 
     stops = [0.00, 1.00]
-    red   = [0.98,  0./255.]
-    green = [0.98, 30./255.]
-    blue  = [0.98, 59./255.]
+    #red   = [0.98,  0./255.]
+    #green = [0.98, 30./255.]
+    #blue  = [0.98, 59./255.]
+    red   = [0.98,   2./255.]
+    green = [0.98, 153./255.]
+    blue  = [0.98, 255./255.]
 
     s = array('d', stops)
     r = array('d', red)

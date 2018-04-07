@@ -34,13 +34,13 @@ class canvas (object):
 
         # Check(s)
         assert type(num_pads) == int, "Number of pads must be an integer"
-        assert num_pads < 3, "Requested number of pads {} is too large".format(num_pads)
+        #assert num_pads < 3, "Requested number of pads {} is too large".format(num_pads)
         assert num_pads > 0, "Requested number of pads {} is too small".format(num_pads)
 
         # Member variables
         self._num_pads = num_pads
         self._fraction = fraction if num_pads == 2 else 0.
-        self._size = size or ((600, int(521.79/float(1. - 0.3))) if (num_pads == 2 and ratio) else (800,600))
+        self._size = size or ((600, int(521.79/float(1. - 0.3))) if (num_pads == 2 and ratio) else (600,500))
         self._canvas = ROOT.TCanvas('c_{}'.format(id(self)), "", self._size[0], self._size[1])
         self._ratio = ratio and self._num_pads == 2
         self._setup = False
@@ -53,6 +53,13 @@ class canvas (object):
         elif self._num_pads == 2:
             self._pads.append(pad(self, (0, fraction, 1, 1)))
             self._pads.append(pad(self, (0, 0, 1, fraction)))
+        else:  # Assuming regular, horizontal pad placement
+            f = 1. / float(self._num_pads)
+            offset = 0.2
+            height = 1 - offset
+            for idx in reversed(range(self._num_pads)):
+                self._pads.append(pad(self, (0, offset + idx * f * height, 1, offset + (idx + 1) * f * height)))
+                pass
             pass
 
         # Draw pads
