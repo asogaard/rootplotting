@@ -33,9 +33,9 @@ class canvas (object):
         ROOT.gROOT.SetBatch(batch)
 
         # Check(s)
-        assert type(num_pads) == int, "Number of pads must be an integer"
+        #assert type(num_pads) == int, "Number of pads must be an integer"
         #assert num_pads < 3, "Requested number of pads {} is too large".format(num_pads)
-        assert num_pads > 0, "Requested number of pads {} is too small".format(num_pads)
+        #assert num_pads > 0, "Requested number of pads {} is too small".format(num_pads)
 
         # Member variables
         self._num_pads = num_pads
@@ -48,11 +48,35 @@ class canvas (object):
 
         # -- Pads
         self._pads = list()
-        if   self._num_pads == 1:
-            self._pads.append(pad(self, (0, 0, 1, 1)))
-        elif self._num_pads == 2:
-            self._pads.append(pad(self, (0, fraction, 1, 1)))
-            self._pads.append(pad(self, (0, 0, 1, fraction)))
+        if isinstance(self._num_pads, int) and self._num_pads <= 2:
+            if   self._num_pads == 1:
+                self._pads.append(pad(self, (0, 0, 1, 1)))
+            elif self._num_pads == 2:
+                self._pads.append(pad(self, (0, fraction, 1, 1)))
+                self._pads.append(pad(self, (0, 0, 1, fraction)))
+                pass
+        else:  # Assuming regular pad placement
+            if isinstance(self._num_pads, int):
+                self._num_pads = [self._num_pads]
+                pass
+            self._num_pads = list(self._num_pads)
+            while len(self._num_pads) < 2: self._num_pads.insert(0, 1)
+            assert len(self._num_pads) == 2
+
+            nx, ny = self._num_pads
+            fx, fy = map(lambda n: 1. / float(n), self._num_pads)
+            margin = 0.01
+            n = nx * ny
+            for ipad in reversed(range(n)):
+                ix = (nx - 1 - ipad) %  nx
+                iy = ipad // nx
+
+                self._pads.append(pad(self, ( ix      * fx,  iy      * fy,
+                                             (ix + 1) * fx, (iy + 1) * fy)))
+                pass
+            pass
+
+        '''
         else:  # Assuming regular, horizontal pad placement
             f = 1. / float(self._num_pads)
             offset = 0.2
@@ -61,6 +85,8 @@ class canvas (object):
                 self._pads.append(pad(self, (0, offset + idx * f * height, 1, offset + (idx + 1) * f * height)))
                 pass
             pass
+            '''
+
 
         # Draw pads
         for p in self._pads:
@@ -68,7 +94,6 @@ class canvas (object):
             p._pad.Draw()
             self._canvas.Update()
             pass
-
         return
 
 
@@ -89,6 +114,10 @@ class canvas (object):
         """ ... """
         assert len(self._pads) == 1, "More than one pad exists; call is ambiguous"
         return self._pads[0]
+
+    def pad (self, idx=0):
+        """ ... """
+        return self.pads()[idx]
 
 
     def pads (self):

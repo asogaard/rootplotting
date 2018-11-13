@@ -515,7 +515,9 @@ class pad (object):
                 horisontal='R',
                 vertical='T',
                 reverse=False,
-                sort=False):
+                sort=False,
+                columns=1,
+                margin=None):
         """ Draw legend on TPad. """
 
         # Check(s)
@@ -538,7 +540,7 @@ class pad (object):
         fontsize = ROOT.gStyle.GetLegendTextSize()
 
         offset = 0.05
-        height = (N + (1 if header else 0) + (len(categories) if categories else 0)) * fontsize / float(h) * 1.30
+        height = (np.ceil(N/float(columns)) + (1 if header else 0) + (len(categories) if categories else 0)) * fontsize / float(h) * 1.30
 
         # Setting x coordinates.
         if not (xmin or xmax):
@@ -576,11 +578,19 @@ class pad (object):
 
         # Create legend
         self._legends.append(ROOT.TLegend(xmin, ymin, xmax, ymax))
-
+        self._legends[-1].SetNColumns(columns)
+        if margin is not None:
+            self._legends[-1].SetMargin(margin)
+            pass
+        
         if header:
             self._legends[-1].AddEntry(None, header, '')
             self._legends[-1].GetListOfPrimitives()[0].SetTextSize(ROOT.gStyle.GetLegendTextSize() * 0.8)
             self._legends[-1].GetListOfPrimitives()[0].SetTextColor(ROOT.kGray + 3)
+            pass
+
+        for _ in range(1,columns):
+            self._legends[-1].AddEntry(None, '', '')
             pass
 
         # @TODO: Defer to parent pad, if 'overlay' (?)
@@ -743,6 +753,12 @@ class pad (object):
             else:
                 hist = data.Clone(data.GetName() + '_clone')
                 return self._plot1D      (hist, display=display, **kwargs)
+
+        elif type(data).__name__.startswith('TH2'):
+            # ROOT 2D-type
+            assert plottype == PlotType.hist2d
+            hist = data.Clone(data.GetName() + '_clone')
+            return self._plot1D      (hist, display=display, **kwargs)  # @TODO: _plot2D?
 
         else:
             warning("_plot: Input data type not recognised:")
@@ -1309,7 +1325,7 @@ class pad (object):
         # Check(s)
         if type(h) == ROOT.THStack: return
 
-        option = option.strip().split()[0].upper()
+        option = option.strip().upper()
         if 'P' not in option:
             h.SetMarkerSize (0)
             h.SetMarkerStyle(0)
