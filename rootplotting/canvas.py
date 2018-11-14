@@ -55,7 +55,27 @@ class canvas (object):
                 self._pads.append(pad(self, (0, fraction, 1, 1)))
                 self._pads.append(pad(self, (0, 0, 1, fraction)))
                 pass
-        else:  # Assuming regular pad placement
+        elif isinstance(fraction, (list, tuple)):
+
+            assert len(fraction) == num_pads
+            if set(map(type,fraction)) == {int}:
+                fraction = [f / float(sum(fraction)) for f in fraction]
+            else:
+                assert np.abs(np.sum(fraction) - 1.0) < 1.0E-06, "Fractions don't sum to one: {}".format(sum(fraction))
+                pass
+
+            fractions = 1. - np.cumsum([0] + list(fraction))
+            
+            margin = 0.1
+            m1, m2 = margin, 0.
+            for y2, y1 in zip(fractions[:-1], fractions[1:]):
+                # @TODO: Margin?
+                self._pads.append(pad(self, (0, y1, 1, y2 )))
+                m2 += margin / float(num_pads - 1)
+                m1 -= margin / float(num_pads - 1)
+                pass
+
+        else: # Assuming regular pad placement
             if isinstance(self._num_pads, int):
                 self._num_pads = [self._num_pads]
                 pass

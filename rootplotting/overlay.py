@@ -26,7 +26,7 @@ class overlay (pad):
     @TODO: Elaborate!
     """
 
-    def __init__ (self, base, color=ROOT.kRed):
+    def __init__ (self, base, color=ROOT.kRed, ndiv=520):
         """ Constructor. """
         # Check if canvas
         if hasattr(base, 'pads'):
@@ -59,10 +59,11 @@ class overlay (pad):
         self._lims_set = False
         self._color = color
         self._label = None
+        self._ndiv  = ndiv
 
         # Resize canvas and pad(s)
         right_margin = 0.12
-        c = base._base._bare() # Getting parent TCanvas; assuming 'canvas' > 'pad' > 'overlay' structure. @TODO: Improve?
+        c = base._bare() # Getting parent TCanvas; assuming 'canvas' > 'pad' > 'overlay' structure. @TODO: Improve?
         w_initial = 1 - c.GetLeftMargin() - c.GetRightMargin()
         w_final   = 1 - c.GetLeftMargin() - right_margin
         c.SetCanvasSize(int(c.GetWw() * w_initial / w_final), c.GetWh())
@@ -220,7 +221,7 @@ class overlay (pad):
         # Create and draw axis
         self._axis = ROOT.TGaxis(self._xmax, ymin,
                                  self._xmax, ymax,
-                                 ymin, ymax, 510, "+L")
+                                 ymin, ymax, self._ndiv, "+L")
         self._axis.Draw()
 
         # Set axis label (opt.)
